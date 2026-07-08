@@ -1,0 +1,23 @@
+# Secrets
+.env
+
+# Backups / intermediate dumps
+*.bak
+*.bak[0-9]
+pon_data.json.bak*
+
+# Logs
+*.log
+*.log.err
+_streamlit.log*
+streamlit.log*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

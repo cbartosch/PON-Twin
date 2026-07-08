@@ -1,0 +1,32 @@
+services:
+  spanner-emulator:
+    image: gcr.io/cloud-spanner-emulator/emulator:latest
+    container_name: pon-spanner-emulator
+    ports:
+      # gRPC published on host 9011 (host 9010 is held by Zscaler/ZSATunnel).
+      # The app talks to the emulator over the docker network on 9010 regardless.
+      - "9011:9010"
+      - "9020:9020"
+    restart: unless-stopped
+
+  digital-twin:
+    build: .
+    image: pon-digital-twin:latest
+    container_name: pon-digital-twin
+    depends_on:
+      - spanner-emulator
+    ports:
+      - "8520:8520"
+    volumes:
+      # Mount a project-local .env (copy .env.example -> .env and add your key)
+      # so the Ask (LLM) tab auto-loads OPENAI_API_KEY. Read-only.
+      - "./.env:/app/.env:ro"
+    environment:
+      # Fallback if the shell already exports the key.
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Spanner emulator (datastore of record). App connects over the docker network.
+      - SPANNER_EMULATOR_HOST=spanner-emulator:9010
+      - SPANNER_PROJECT=twin-project
+      - SPANNER_INSTANCE=twin-instance
+      - SPANNER_DATABASE=twin
+    restart: unless-stopped

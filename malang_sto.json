@@ -1,0 +1,955 @@
+{
+  "source_file": "Malang Sites (cleaned)-vShared.xlsx",
+  "region": "REGIONAL 5 JAWA TIMUR / WITEL MALANG",
+  "counts": {
+    "tier1": 1,
+    "tier2": 4,
+    "tier3": 19,
+    "routes": 66
+  },
+  "core_tier1": {
+    "sto_code": "ML",
+    "sto_name": "MALANG",
+    "sto_name_official": "STO ML. KOTA",
+    "tier": 1,
+    "datel": "MALANG",
+    "witel": "MALANG",
+    "city": "Malang",
+    "address": "JL. BASUKI RAHMAT NO. 7 , DESA KAUMAN , KEC. KLOJEN , MALANG",
+    "latitude": -7.980061,
+    "longitude": 112.630203
+  },
+  "tier2_aggregation": [
+    {
+      "sto_code": "BLB",
+      "sto_name": "BELIMBING",
+      "sto_name_official": "STO BLIMBING",
+      "tier": 2,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SUTOYO , DESA LOWOK WARU , KEC. LOWOK WARU , MALANG",
+      "latitude": -7.956554,
+      "longitude": 112.635268
+    },
+    {
+      "sto_code": "GDI",
+      "sto_name": "GONDANGLEGI",
+      "sto_name_official": "STO GONDANGLEGI",
+      "tier": 2,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL.DIPONEGORO NO. 4 , DESA GONDANGLEGI KULON , KEC. GONDANGLEGI , MALANG",
+      "latitude": -8.008647,
+      "longitude": 112.629659
+    },
+    {
+      "sto_code": "KPN",
+      "sto_name": "KEPANJEN",
+      "sto_name_official": "STO KEPANJEN",
+      "tier": 2,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SULTAN AGUNG NO. 30B , DESA KEPANJEN , KEC. KEPANJEN , MALANG",
+      "latitude": -7.963899,
+      "longitude": 112.613701
+    },
+    {
+      "sto_code": "KLJ",
+      "sto_name": "KLOJEN",
+      "sto_name_official": "STO KLOJEN",
+      "tier": 2,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SURABAYA TERUSAN NO. 3 , DESA SUMBER SARI , KEC. KLOJEN , MALANG",
+      "latitude": -8.029859,
+      "longitude": 112.494324
+    }
+  ],
+  "tier3_access": [
+    {
+      "sto_code": "AMP",
+      "sto_name": "AMPEL GADING",
+      "sto_name_official": "STO AMPELGADING",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA TIRTOMARTO , DESA TIRTOMARTO , KEC. AMPELGADING , MALANG",
+      "latitude": -8.235971,
+      "longitude": 112.875309,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 37.016,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "BNR",
+      "sto_name": "BANTUR",
+      "sto_name_official": "STO BANTUR",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA BANTUR , DESA BANTUR , KEC. BANTUR , MALANG",
+      "latitude": -8.271962,
+      "longitude": 112.602024,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 29.437,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "BUR",
+      "sto_name": "BURING",
+      "sto_name_official": "STO BURING",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA BURING , DESA BURING , KEC. KEDUNG KANDANG , MALANG",
+      "latitude": -8.008595,
+      "longitude": 112.655235,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 2.816,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "BTU",
+      "sto_name": "BATU",
+      "sto_name_official": "STO BATU",
+      "tier": 3,
+      "datel": "BATU",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL.DIPONEGORO NO. 10 , DESA SISIR , KEC. BATU , BATU",
+      "latitude": -7.876981,
+      "longitude": 112.532423,
+      "tier2_parent": "KLJ",
+      "tier2_parent_km": 17.509,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "DNO",
+      "sto_name": "DONO MULYO",
+      "sto_name_official": "STO DONO MULYO",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA DONOMULYO NO. 22 , DESA DONOMULYO , KEC. DONOMULYO , MALANG",
+      "latitude": -8.285529,
+      "longitude": 112.427384,
+      "tier2_parent": "KLJ",
+      "tier2_parent_km": 29.369,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "DPT",
+      "sto_name": "DAMPIT",
+      "sto_name_official": "STO DAMPIT",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SEMERU SELATAN NO. 14 , DESA DAMPIT , KEC. DAMPIT , MALANG",
+      "latitude": -8.21237,
+      "longitude": 112.750987,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 26.297,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "GD",
+      "sto_name": "GADANG",
+      "sto_name_official": "STO GADANG",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SUGIONO , DESA GADANG , KEC. GADANG , MALANG",
+      "latitude": -8.008647,
+      "longitude": 112.629659,
+      "tier2_parent": "KLJ",
+      "tier2_parent_km": 15.087,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "GKW",
+      "sto_name": "GUNUNG KAWI",
+      "sto_name_official": "STO GUNUNGKAWI",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA GUNUNGKAWI , DESA WONOSARI , KEC. WONOSARI , MALANG",
+      "latitude": -8.176525,
+      "longitude": 112.636711,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 18.683,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "KPO",
+      "sto_name": "KARANG PLOSO",
+      "sto_name_official": "STO KARANGPLOSO",
+      "tier": 3,
+      "datel": "BATU",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA KARANGPLOSO , DESA KEPUH HARJO , KEC. KARANGPLOSO , MALANG",
+      "latitude": -8.132617,
+      "longitude": 112.571383,
+      "tier2_parent": "KLJ",
+      "tier2_parent_km": 14.231,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "LW",
+      "sto_name": "LAWANG",
+      "sto_name_official": "STO LAWANG",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. TAMRIN NO. 47 , DESA LAWANG , KEC. LAWANG , MALANG",
+      "latitude": -7.895818,
+      "longitude": 112.597498,
+      "tier2_parent": "KPN",
+      "tier2_parent_km": 7.778,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "NGT",
+      "sto_name": "NGANTANG",
+      "sto_name_official": "STO NGANTANG",
+      "tier": 3,
+      "datel": "BATU",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA NGANTANG , DESA KAUMREJO , KEC. NGANTANG , MALANG",
+      "latitude": -7.845795,
+      "longitude": 112.370929,
+      "tier2_parent": "KLJ",
+      "tier2_parent_km": 24.568,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "PGK",
+      "sto_name": "PAGAK",
+      "sto_name_official": "STO PAGAK",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. ABDUL RAZAK , DESA PAGAK , KEC. PAGAK , MALANG",
+      "latitude": -8.231341,
+      "longitude": 112.522887,
+      "tier2_parent": "KPN",
+      "tier2_parent_km": 31.374,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "PKS",
+      "sto_name": "PAKIS",
+      "sto_name_official": "STO PAKIS",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA PAKIS , DESA PAKIS KEMBAR , KEC. PAKIS , MALANG",
+      "latitude": -7.959699,
+      "longitude": 112.716997,
+      "tier2_parent": "BLB",
+      "tier2_parent_km": 9.007,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "SBM",
+      "sto_name": "SUMBER MANJING",
+      "sto_name_official": "STO SUMBERMANJING WETAN",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA SUMBERMANJING WETAN , DESA SUMBERMANJING WETAN , KEC. SUMBERMANJING WETAN , MALANG",
+      "latitude": -8.2728413,
+      "longitude": 112.6893792,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 30.104,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "SBP",
+      "sto_name": "SUMBER PUCUNG",
+      "sto_name_official": "STO SUMBERPUCUNG-A",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL SUDIRMAN NO. 157 , DESA SUMBERPUCUNG , KEC. SUMBERPUCUNG , MALANG",
+      "latitude": -8.157068,
+      "longitude": 112.47297,
+      "tier2_parent": "KPN",
+      "tier2_parent_km": 26.484,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "SGS",
+      "sto_name": "SINGOSARI",
+      "sto_name_official": "STO SINGOSARI",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA SINGOSARI , DESA PAGENTAN , KEC. SINGOSARI , MALANG",
+      "latitude": -7.888653,
+      "longitude": 112.669502,
+      "tier2_parent": "BLB",
+      "tier2_parent_km": 8.439,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "SWJ",
+      "sto_name": "SAWOJAJAR",
+      "sto_name_official": "STO SAWOJAJAR",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. D SENTANI , DESA MADYOPURO , KEC. KEDUNG KANDANG , MALANG",
+      "latitude": -7.977228,
+      "longitude": 112.665443,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 5.266,
+      "tier2_parent_method": "routing"
+    },
+    {
+      "sto_code": "TMP",
+      "sto_name": "TUMPANG",
+      "sto_name_official": "STO TUMPANG",
+      "tier": 3,
+      "datel": "MALANG",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. RAYA TUMPANG , DESA TUMPANG , KEC. TUMPANG , MALANG",
+      "latitude": -8.023108,
+      "longitude": 112.767266,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 15.237,
+      "tier2_parent_method": "nearest"
+    },
+    {
+      "sto_code": "TU",
+      "sto_name": "TUREN",
+      "sto_name_official": "STO TUREN-A",
+      "tier": 3,
+      "datel": "KEPANJEN",
+      "witel": "MALANG",
+      "city": "Malang",
+      "address": "JL. SUDIRMAN NO. 197 , DESA TUREN , KEC. TUREN , MALANG",
+      "latitude": -8.173943,
+      "longitude": 112.686662,
+      "tier2_parent": "GDI",
+      "tier2_parent_km": 19.422,
+      "tier2_parent_method": "routing"
+    }
+  ],
+  "routes": [
+    {
+      "from": "AMP",
+      "tier_from": 3,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 37.016,
+      "under_10km": false
+    },
+    {
+      "from": "AMP",
+      "tier_from": 3,
+      "to": "DPT",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 13.931,
+      "under_10km": false
+    },
+    {
+      "from": "BLB",
+      "tier_from": 2,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 2.673,
+      "under_10km": true
+    },
+    {
+      "from": "BLB",
+      "tier_from": 2,
+      "to": "KLJ",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 2",
+      "distance_km": 17.53,
+      "under_10km": false
+    },
+    {
+      "from": "BLB",
+      "tier_from": 2,
+      "to": "PKS",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 9.007,
+      "under_10km": true
+    },
+    {
+      "from": "BLB",
+      "tier_from": 2,
+      "to": "SGS",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 8.439,
+      "under_10km": true
+    },
+    {
+      "from": "BNR",
+      "tier_from": 3,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 29.437,
+      "under_10km": false
+    },
+    {
+      "from": "BNR",
+      "tier_from": 3,
+      "to": "DNO",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 19.276,
+      "under_10km": false
+    },
+    {
+      "from": "BTU",
+      "tier_from": 3,
+      "to": "KLJ",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 17.509,
+      "under_10km": false
+    },
+    {
+      "from": "BTU",
+      "tier_from": 3,
+      "to": "NGT",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 18.123,
+      "under_10km": false
+    },
+    {
+      "from": "BTU",
+      "tier_from": 3,
+      "to": "KPO",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 28.747,
+      "under_10km": false
+    },
+    {
+      "from": "BUR",
+      "tier_from": 3,
+      "to": "GD",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 2.816,
+      "under_10km": true
+    },
+    {
+      "from": "BUR",
+      "tier_from": 3,
+      "to": "SWJ",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 3.665,
+      "under_10km": true
+    },
+    {
+      "from": "DNO",
+      "tier_from": 3,
+      "to": "BNR",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 19.276,
+      "under_10km": false
+    },
+    {
+      "from": "DNO",
+      "tier_from": 3,
+      "to": "PGK",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 12.114,
+      "under_10km": false
+    },
+    {
+      "from": "DPT",
+      "tier_from": 3,
+      "to": "TU",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 8.269,
+      "under_10km": true
+    },
+    {
+      "from": "DPT",
+      "tier_from": 3,
+      "to": "AMP",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 13.931,
+      "under_10km": false
+    },
+    {
+      "from": "GD",
+      "tier_from": 3,
+      "to": "KLJ",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 15.087,
+      "under_10km": false
+    },
+    {
+      "from": "GD",
+      "tier_from": 3,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 3",
+      "distance_km": 3.179,
+      "under_10km": true
+    },
+    {
+      "from": "GD",
+      "tier_from": 3,
+      "to": "BUR",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 2.816,
+      "under_10km": true
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "SWJ",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 5.266,
+      "under_10km": true
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 3.179,
+      "under_10km": true
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "TU",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 19.422,
+      "under_10km": false
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "AMP",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 37.016,
+      "under_10km": false
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "KPN",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 2",
+      "distance_km": 5.277,
+      "under_10km": true
+    },
+    {
+      "from": "GDI",
+      "tier_from": 2,
+      "to": "BNR",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 29.437,
+      "under_10km": false
+    },
+    {
+      "from": "GKW",
+      "tier_from": 3,
+      "to": "SBP",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 18.152,
+      "under_10km": false
+    },
+    {
+      "from": "KLJ",
+      "tier_from": 2,
+      "to": "BLB",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 2",
+      "distance_km": 17.53,
+      "under_10km": false
+    },
+    {
+      "from": "KLJ",
+      "tier_from": 2,
+      "to": "KPO",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 14.231,
+      "under_10km": false
+    },
+    {
+      "from": "KLJ",
+      "tier_from": 2,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 15.954,
+      "under_10km": false
+    },
+    {
+      "from": "KLJ",
+      "tier_from": 2,
+      "to": "GD",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 15.087,
+      "under_10km": false
+    },
+    {
+      "from": "KLJ",
+      "tier_from": 2,
+      "to": "BTU",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 17.509,
+      "under_10km": false
+    },
+    {
+      "from": "KPN",
+      "tier_from": 2,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 2",
+      "distance_km": 5.277,
+      "under_10km": true
+    },
+    {
+      "from": "KPN",
+      "tier_from": 2,
+      "to": "PGK",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 31.374,
+      "under_10km": false
+    },
+    {
+      "from": "KPN",
+      "tier_from": 2,
+      "to": "SBP",
+      "tier_to": 3,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 26.484,
+      "under_10km": false
+    },
+    {
+      "from": "KPN",
+      "tier_from": 2,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 2.556,
+      "under_10km": true
+    },
+    {
+      "from": "KPO",
+      "tier_from": 3,
+      "to": "SGS",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 29.2,
+      "under_10km": false
+    },
+    {
+      "from": "KPO",
+      "tier_from": 3,
+      "to": "KLJ",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 14.231,
+      "under_10km": false
+    },
+    {
+      "from": "KPO",
+      "tier_from": 3,
+      "to": "BTU",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 28.747,
+      "under_10km": false
+    },
+    {
+      "from": "LW",
+      "tier_from": 3,
+      "to": "SGS",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 7.971,
+      "under_10km": true
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "BLB",
+      "tier_to": 2,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 2.673,
+      "under_10km": true
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "KLJ",
+      "tier_to": 2,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 15.954,
+      "under_10km": false
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "GD",
+      "tier_to": 3,
+      "route_type": "Tier 1 <-> Tier 3",
+      "distance_km": 3.179,
+      "under_10km": true
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "SWJ",
+      "tier_to": 3,
+      "route_type": "Tier 1 <-> Tier 3",
+      "distance_km": 3.893,
+      "under_10km": true
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 3.179,
+      "under_10km": true
+    },
+    {
+      "from": "ML",
+      "tier_from": 1,
+      "to": "KPN",
+      "tier_to": 2,
+      "route_type": "Tier 1 <-> Tier 2",
+      "distance_km": 2.556,
+      "under_10km": true
+    },
+    {
+      "from": "NGT",
+      "tier_from": 3,
+      "to": "BTU",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 18.123,
+      "under_10km": false
+    },
+    {
+      "from": "PGK",
+      "tier_from": 3,
+      "to": "DNO",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 12.114,
+      "under_10km": false
+    },
+    {
+      "from": "PGK",
+      "tier_from": 3,
+      "to": "KPN",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 31.374,
+      "under_10km": false
+    },
+    {
+      "from": "PKS",
+      "tier_from": 3,
+      "to": "SGS",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 9.475,
+      "under_10km": true
+    },
+    {
+      "from": "PKS",
+      "tier_from": 3,
+      "to": "TMP",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 8.964,
+      "under_10km": true
+    },
+    {
+      "from": "PKS",
+      "tier_from": 3,
+      "to": "BLB",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 9.007,
+      "under_10km": true
+    },
+    {
+      "from": "SBP",
+      "tier_from": 3,
+      "to": "KPN",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 26.484,
+      "under_10km": false
+    },
+    {
+      "from": "SBP",
+      "tier_from": 3,
+      "to": "GKW",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 18.152,
+      "under_10km": false
+    },
+    {
+      "from": "SGS",
+      "tier_from": 3,
+      "to": "BLB",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 8.439,
+      "under_10km": true
+    },
+    {
+      "from": "SGS",
+      "tier_from": 3,
+      "to": "KPO",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 29.2,
+      "under_10km": false
+    },
+    {
+      "from": "SGS",
+      "tier_from": 3,
+      "to": "LW",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 7.971,
+      "under_10km": true
+    },
+    {
+      "from": "SGS",
+      "tier_from": 3,
+      "to": "PKS",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 9.475,
+      "under_10km": true
+    },
+    {
+      "from": "SWJ",
+      "tier_from": 3,
+      "to": "TMP",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 12.318,
+      "under_10km": false
+    },
+    {
+      "from": "SWJ",
+      "tier_from": 3,
+      "to": "ML",
+      "tier_to": 1,
+      "route_type": "Tier 1 <-> Tier 3",
+      "distance_km": 3.893,
+      "under_10km": true
+    },
+    {
+      "from": "SWJ",
+      "tier_from": 3,
+      "to": "BUR",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 3.665,
+      "under_10km": true
+    },
+    {
+      "from": "SWJ",
+      "tier_from": 3,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 5.266,
+      "under_10km": true
+    },
+    {
+      "from": "TMP",
+      "tier_from": 3,
+      "to": "PKS",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 8.964,
+      "under_10km": true
+    },
+    {
+      "from": "TMP",
+      "tier_from": 3,
+      "to": "SWJ",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 12.318,
+      "under_10km": false
+    },
+    {
+      "from": "TU",
+      "tier_from": 3,
+      "to": "GDI",
+      "tier_to": 2,
+      "route_type": "Tier 2 <-> Tier 3",
+      "distance_km": 19.422,
+      "under_10km": false
+    },
+    {
+      "from": "TU",
+      "tier_from": 3,
+      "to": "DPT",
+      "tier_to": 3,
+      "route_type": "Tier 3 <-> Tier 3",
+      "distance_km": 8.269,
+      "under_10km": true
+    }
+  ]
+}
