@@ -49,6 +49,19 @@ else:
 
 OP_COLORS = {"Operator A": [37, 99, 235], "Operator B": [234, 88, 12]}
 
+# National IconPlus ODP/FAT footprint — a compact side-file (lat/lng only) read
+# directly from disk. NOT seeded to Spanner and NOT served over MCP (355k points
+# would be far too large for stdio); the UI loads it straight from the image.
+NATIONAL_POINTS = os.path.join(HERE, "national_points.json")
+
+
+@st.cache_data(show_spinner="Loading national ODP footprint…")
+def load_national_points():
+    if not os.path.exists(NATIONAL_POINTS):
+        return {"meta": {}, "odps": []}
+    with open(NATIONAL_POINTS, encoding="utf-8") as f:
+        return json.load(f)
+
 # ── MCP plumbing ─────────────────────────────────────────────────────────────
 async def _list_tools():
     async with stdio_client(SERVER) as (r, w):
@@ -452,8 +465,12 @@ with tab_trace:
 with tab_map:
     st.subheader("Asset map")
     import pydeck as pdk
-    show_olts = st.checkbox("OLTs", True)
-    show_odps = st.checkbox("ODPs", True)
+    show_national = st.checkbox(
+        "National IconPlus ODP/FAT footprint (all Indonesia)", True,
+        help="355k secondary-splitter (FAT/ODP) access points across PLN IconPlus's "
+             "full national serving area. Rendered directly from national_points.json.")
+    show_olts = st.checkbox("OLTs (national ICONNET + Malang)", True)
+    show_odps = st.checkbox("ODPs (Malang detailed)", False)
     show_homes = st.checkbox("Homes (sampled)", False)
     show_sto = st.checkbox("STO backbone (Tier 1/2/3 + aggregation links)", True)
     show_recon = st.checkbox("Operator A reconciliation links (OLT → Tier-3)", True)
@@ -475,6 +492,24 @@ with tab_map:
     TIER_RADIUS = {1: 280, 2: 190, 3: 110}
 
     layers, all_lat, all_lon = [], [], []
+    national_on = False
+
+    if show_national:
+        npts = load_national_points()
+        nodps = npts.get("odps", [])
+        if nodps:
+            national_on = True
+            ndf_nat = pd.DataFrame(nodps)
+            layers.append(pdk.Layer(
+                "ScatterplotLayer", data=ndf_nat,
+                get_position="[lng, lat]", get_radius=60,
+                radius_min_pixels=0.5, radius_max_pixels=3,
+                get_fill_color=[234, 88, 12, 140], pickable=False))
+            st.caption(
+                f"National footprint: {len(nodps):,} IconPlus ODP/FAT access points "
+                f"({npts.get('meta', {}).get('operator', 'PLN IconPlus')}). "
+                "Note: national cable geometry is not in the source data — only Malang "
+                "has cable routes (toggle 'Fibre cable routes').")
 
     if show_olts:
         olts = tool_call("list_olts").get("olts", [])
@@ -579,13 +614,18 @@ with tab_map:
                 get_source_position="from", get_target_position="to",
                 get_color=[37, 99, 235], get_width=3, pickable=True))
 
-    if layers and all_lat:
-        zoom = 10.5 if (show_sto or show_recon) else 12.5
+    if layers and (all_lat or national_on):
+        if national_on:
+            # Centre on Indonesia's archipelago and zoom right out.
+            center_lat, center_lon, zoom = -2.5, 118.0, 4.2
+        else:
+            center_lat = sum(all_lat)/len(all_lat)
+            center_lon = sum(all_lon)/len(all_lon)
+            zoom = 10.5 if (show_sto or show_recon) else 12.5
         st.pydeck_chart(pdk.Deck(
             map_style=None,
             initial_view_state=pdk.ViewState(
-                latitude=sum(all_lat)/len(all_lat),
-                longitude=sum(all_lon)/len(all_lon),
+                latitude=center_lat, longitude=center_lon,
                 zoom=zoom, pitch=0),
             layers=layers,
             tooltip={"text": "{label}{operator} {area_id}"},
