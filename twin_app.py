@@ -490,8 +490,13 @@ with tab_map:
     show_olts = st.checkbox("OLTs (national ICONNET + Malang)", True)
     show_odps = st.checkbox("ODPs (Malang detailed)", False)
     show_homes = st.checkbox("Homes (sampled)", False)
-    show_sto = st.checkbox("STO backbone (Tier 1/2/3 + aggregation links)", True)
-    show_recon = st.checkbox("Operator A reconciliation links (OLT → Tier-3)", True)
+    # Malang-only overlays with their own tier/operator colour scheme (red/amber/
+    # teal STO tiers, blue recon links). Default OFF so the map opens with a
+    # uniform national palette (orange ODPs, blue cables, operator-coloured OLTs);
+    # only Malang has this Telkom STO hierarchy, so leaving them on made Malang
+    # look differently coloured from the rest of Indonesia.
+    show_sto = st.checkbox("STO backbone — Malang only (Tier 1/2/3 + aggregation links)", False)
+    show_recon = st.checkbox("Operator A reconciliation links — Malang only (OLT → Tier-3)", False)
     show_fiber = st.checkbox("Fibre cable routes (by cable type)", False)
 
     # Cable-role colours for the fibre route layer.
