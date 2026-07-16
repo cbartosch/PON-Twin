@@ -4,6 +4,7 @@ Exposes tools for an AI agent to query the full topology and inventory.
 """
 import json, os, math
 from pathlib import Path
+import synergy
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp import types
@@ -487,6 +488,55 @@ async def list_tools():
             ),
             inputSchema={"type":"object","properties":{}},
         ),
+        types.Tool(
+            name="list_synergy_levers",
+            description=(
+                "List the network-synergy driver catalogue (Telkom + PLN IconPlus/ICONNET) from the "
+                "Network Synergy workbook: 14 levers across PON passive, OLT, OLT TotEx, aggregation L2, "
+                "transport, PE router, BNG, MSAN, NOC/OSS, field teams, processes and procurement. Returns "
+                "each lever's bucket, opportunity, calculation logic, primary data required, which twin "
+                "driver grounds it, timing, owner and treatment, plus the certainty weighting scheme."
+            ),
+            inputSchema={"type":"object","properties":{}},
+        ),
+        types.Tool(
+            name="get_synergy_assumptions",
+            description=(
+                "Return the SYNTHETIC values tables used to estimate synergies (unit economics, "
+                "duplication/applicability ratios, certainty weights, synthetic volume estimators, and the "
+                "workbook's illustrative model). Every value here is a flagged estimate, not observed data."
+            ),
+            inputSchema={"type":"object","properties":{}},
+        ),
+        types.Tool(
+            name="analyze_synergy_lever",
+            description=(
+                "Estimate one synergy lever for a region by combining REAL twin volumes (homes passed, "
+                "OLT/FDT/FAT counts, route-km) with SYNTHETIC unit-economics tables. Returns twin evidence, "
+                "the synthetic inputs used, an IDR-bn estimate (gross/cost-to-achieve/net/certainty/bankable/"
+                "risk), the workbook illustrative figure, and flags. Every result is flagged "
+                "derived_from_synthetic; volumes are separately flagged twin-grounded or synthetic."
+            ),
+            inputSchema={"type":"object","properties":{
+                "lever_id":{"type":"string","description":"e.g. olt_retire_redundant, pon_duplicate_build (see list_synergy_levers)"},
+                "region":{"type":"string","description":"Omit/all=whole footprint; 'national'; 'malang'; an SBU code e.g. SBU-JAWA-BAGIAN-TIMUR; or an area_id e.g. ICON-ACEH"},
+                "applicability_ratio":{"type":"number","description":"Override the synthetic applicability/duplication ratio."},
+                "unit_value_idr_bn":{"type":"number","description":"Override the synthetic per-unit value (IDR bn)."},
+                "cost_to_achieve_ratio":{"type":"number","description":"Override the synthetic cost-to-achieve ratio."}
+            },"required":["lever_id"]},
+        ),
+        types.Tool(
+            name="synergy_summary",
+            description=(
+                "Portfolio roll-up of all 14 synergy levers for a region: a twin volume snapshot plus total "
+                "gross/net/bankable/risk (IDR bn) and a per-lever table showing driver, driver volume, whether "
+                "the volume is twin-grounded, and the estimated values. All monetary figures are flagged "
+                "SYNTHETIC estimates."
+            ),
+            inputSchema={"type":"object","properties":{
+                "region":{"type":"string","description":"Omit/all=whole footprint; 'national'; 'malang'; an SBU code; or an area_id."}
+            }},
+        ),
     ]
 
 @server.call_tool()
@@ -804,6 +854,24 @@ async def call_tool(name: str, arguments: dict):
             "collection_counts": {k: (len(v) if isinstance(v, list) else 1) for k, v in D.items()},
             "sto_loaded": STO is not None,
         })
+
+    elif name == "list_synergy_levers":
+        return ok(synergy.catalogue())
+
+    elif name == "get_synergy_assumptions":
+        synergy._load()
+        return ok(synergy._ASSUME)
+
+    elif name == "analyze_synergy_lever":
+        overrides = {k: arguments[k] for k in
+                     ("applicability_ratio", "unit_value_idr_bn", "cost_to_achieve_ratio")
+                     if arguments.get(k) is not None}
+        return ok(synergy.analyze_lever(D, arguments["lever_id"],
+                                        region=arguments.get("region"),
+                                        overrides=overrides))
+
+    elif name == "synergy_summary":
+        return ok(synergy.summary(D, region=arguments.get("region")))
 
     return ok({"error": f"Unknown tool: {name}"})
 

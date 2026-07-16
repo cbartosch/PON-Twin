@@ -146,11 +146,11 @@ with st.sidebar:
         st.caption("✓ Key loaded from .env")
     model_id = st.text_input("Model", value=os.environ.get("OPENAI_MODEL", "gpt-5.4"))
 
-(tab_dash, tab_areas, tab_consol, tab_recon, tab_trace, tab_map,
+(tab_dash, tab_areas, tab_consol, tab_synergy, tab_recon, tab_trace, tab_map,
  tab_boq, tab_chat, tab_explore) = st.tabs(
     ["📊 Dashboard", "🗺️ Areas & Utilisation", "💵 Consolidation",
-     "🔗 Reconciliation", "🔍 Fiber Path Tracer", "📍 Map", "📦 BoQ",
-     "💬 Ask (LLM)", "🛠️ Tool Explorer"]
+     "🤝 Synergy Analysis", "🔗 Reconciliation", "🔍 Fiber Path Tracer",
+     "📍 Map", "📦 BoQ", "💬 Ask (LLM)", "🛠️ Tool Explorer"]
 )
 
 # ── Dashboard ────────────────────────────────────────────────────────────────
@@ -260,6 +260,95 @@ with tab_consol:
             with st.expander("Assumptions & full result"):
                 st.json(r)
     st.caption("via `project_consolidation`")
+
+# ── Synergy Analysis ─────────────────────────────────────────────────────────
+with tab_synergy:
+    st.subheader("Telkom + ICONNET network synergy analysis")
+    st.caption("Query the twin for the synergy levers from the Network Synergy workbook. "
+               "Volumes (homes passed, OLT/FDT/FAT counts, route-km) come from the digital twin; "
+               "unit economics and any driver the twin does not hold come from **synthetic estimate "
+               "tables** and are flagged.")
+    st.warning("⚠️ All monetary figures are **SYNTHETIC ESTIMATES** (IDR bn), not audited operator "
+               "data. Answers that use a synthetic table are flagged below.")
+
+    # region picker: national / malang / SBU rollups / leaf areas
+    areas_s = tool_call("list_areas").get("areas", [])
+    sbu_ids = [a["area_id"] for a in areas_s if a.get("tier") == 2]
+    leaf_ids = [a["area_id"] for a in areas_s if a.get("tier") != 2]
+    region_opts = ["all", "national", "malang"] + sorted(sbu_ids) + sorted(leaf_ids)
+    region = st.selectbox("Region / scope", region_opts, key="syn_region")
+
+    summ = tool_call("synergy_summary", {"region": region})
+    snap = summ.get("twin_volume_snapshot", {})
+    c = st.columns(4)
+    c[0].metric("Homes passed (twin)", f"{snap.get('homes_passed',0):,}")
+    c[1].metric("ICONNET OLTs (twin)", f"{snap.get('iconnet_olts',0):,}")
+    c[2].metric("Primary splitters/FDT", f"{snap.get('primary_splitters_fdt',0):,}")
+    c[3].metric("FAT serving areas", f"{snap.get('fat_serving_areas',0):,}")
+
+    tot = summ.get("portfolio_totals_idr_bn", {})
+    m = st.columns(5)
+    m[0].metric("Gross (IDR bn)", f"{tot.get('gross_synergy',0):,.0f}")
+    m[1].metric("Cost-to-achieve", f"{tot.get('cost_to_achieve',0):,.0f}")
+    m[2].metric("Net", f"{tot.get('net_synergy',0):,.0f}")
+    m[3].metric("Bankable", f"{tot.get('bankable_synergy',0):,.0f}")
+    m[4].metric("Risk exposure", f"{tot.get('risk_exposure',0):,.0f}")
+    if summ.get("flag"):
+        st.info("🏷️ " + summ["flag"])
+
+    levs = summ.get("levers", [])
+    if levs:
+        ldf = pd.DataFrame(levs)
+        ldf["volume basis"] = ldf["twin_grounded_volume"].map(
+            lambda b: "twin" if b else "SYNTHETIC")
+        show = ["bucket", "lever", "driver", "driver_volume", "volume basis",
+                "gross", "net", "certainty", "bankable", "risk"]
+        st.dataframe(ldf[[c for c in show if c in ldf.columns]],
+                     use_container_width=True, hide_index=True)
+        st.caption("via `synergy_summary` — 'volume basis' = SYNTHETIC when the driver "
+                   "volume is not held in the twin.")
+
+    st.divider()
+    st.markdown("#### Drill into one lever")
+    cat = tool_call("list_synergy_levers").get("levers", [])
+    lid_map = {f'{l["bucket"]} — {l["lever"]}': l["lever_id"] for l in cat}
+    if lid_map:
+        pick = st.selectbox("Lever", list(lid_map.keys()), key="syn_lever")
+        colo = st.columns(3)
+        appl = colo[0].number_input("Applicability ratio (override)", value=0.0, step=0.01,
+                                    format="%.2f", help="0 = use synthetic default")
+        unitv = colo[1].number_input("Unit value IDR bn (override)", value=0.0, step=0.01,
+                                     format="%.4f", help="0 = use synthetic default")
+        ctar = colo[2].number_input("Cost-to-achieve ratio (override)", value=0.0, step=0.01,
+                                    format="%.2f", help="0 = use synthetic default")
+        if st.button("Analyze lever", type="primary"):
+            args = {"lever_id": lid_map[pick], "region": region}
+            if appl > 0: args["applicability_ratio"] = appl
+            if unitv > 0: args["unit_value_idr_bn"] = unitv
+            if ctar > 0: args["cost_to_achieve_ratio"] = ctar
+            r = tool_call("analyze_synergy_lever", args)
+            ev = r.get("twin_evidence", {}); est = r.get("estimate_idr_bn", {})
+            st.markdown(f"**{r.get('bucket')} — {r.get('lever')}**  ·  region *{r.get('region_label')}*")
+            b = "✅ twin-grounded" if ev.get("twin_grounded_volume") else "⚠️ SYNTHETIC volume"
+            st.markdown(f"Driver **{ev.get('driver')}** = **{ev.get('driver_volume'):,}** "
+                        f"({b}, source `{ev.get('driver_source')}`)")
+            e = st.columns(3)
+            e[0].metric("Gross (IDR bn)", f"{est.get('gross_synergy',0):,.1f}")
+            e[1].metric("Net", f"{est.get('net_synergy',0):,.1f}")
+            e[2].metric("Bankable", f"{est.get('bankable_synergy',0):,.1f}")
+            e2 = st.columns(3)
+            e2[0].metric("Certainty", f"{est.get('certainty_score',0):.2f}")
+            e2[1].metric("Cost-to-achieve", f"{est.get('cost_to_achieve',0):,.1f}")
+            e2[2].metric("Risk exposure", f"{est.get('risk_exposure',0):,.1f}")
+            if r.get("flag"):
+                st.warning("🏷️ " + r["flag"])
+            wb = r.get("workbook_illustrative_idr_bn", {})
+            st.caption(f"Workbook illustrative gross: {wb.get('gross_synergy')} IDR bn "
+                       f"(status: {wb.get('status')}). Synthetic tables used: "
+                       f"{', '.join(r.get('synthetic_tables_used', []))}.")
+            with st.expander("Full result + synthetic inputs"):
+                st.json(r)
+    st.caption("via `list_synergy_levers` · `synergy_summary` · `analyze_synergy_lever` · `get_synergy_assumptions`")
 
 # ── Fiber Path Tracer ────────────────────────────────────────────────────────
 with tab_recon:

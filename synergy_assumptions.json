@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "SYNTHETIC": true,
+    "title": "Synergy synthetic values tables (ESTIMATES)",
+    "warning": "Every figure in this file is a SYNTHETIC ESTIMATE, not observed operator data. Any synergy answer that consumes a value from here MUST be flagged 'derived_from_synthetic': true. Replace with audited data (see Top-Down Data Request) before use in decisions.",
+    "currency": "IDR bn (billion Indonesian Rupiah) unless stated",
+    "illustrative_source": "Synergy_Model sheet of Network_Synergy_Table_Better_Version (1).xlsx (values were placeholders in the workbook)",
+    "prepared": "2026-07-16"
+  },
+
+  "table_1_certainty_weights": {
+    "SYNTHETIC": true,
+    "description": "Weighting scheme for the certainty score (must sum to 1.0).",
+    "weights": {
+      "data_quality": 0.20,
+      "field_validation": 0.25,
+      "technical_feasibility": 0.20,
+      "cost_avoidability": 0.20,
+      "timing_readiness": 0.15
+    }
+  },
+
+  "table_2_unit_economics": {
+    "SYNTHETIC": true,
+    "description": "Per-driver unit values and duplication/applicability ratios used to scale twin volumes into money. driver_source='twin' means the volume is pulled live from the digital twin; the unit_value_idr_bn and applicability_ratio are always synthetic estimates.",
+    "levers": {
+      "pon_duplicate_build":   {"driver": "homes_passed",        "driver_source": "twin",      "applicability_ratio": 0.30, "unit_value_idr_bn": 0.00090, "unit_desc": "net avoided build per overlapping home passed (~IDR 0.9m)", "cost_to_achieve_ratio": 0.30, "confidence": "medium", "rationale": "Assumes 30% of ICONNET HP overlap a Telkom planned/committed build; net-of-migration avoided capex."},
+      "pon_route_maintenance": {"driver": "route_km",            "driver_source": "twin_partial","applicability_ratio": 0.22, "unit_value_idr_bn": 0.00060, "unit_desc": "annual maintenance saved per removable route-km (~IDR 0.6m/km/yr)", "cost_to_achieve_ratio": 0.35, "confidence": "low", "rationale": "Route-km real only where twin has cable geometry (Malang); national route-km estimated from FAT count x 0.35 km/FAT."},
+      "olt_retire_redundant":  {"driver": "olts",                "driver_source": "twin",      "applicability_ratio": 0.12, "unit_value_idr_bn": 0.35,    "unit_desc": "opex + avoided refresh per retired OLT", "cost_to_achieve_ratio": 0.24, "confidence": "medium", "rationale": "Assumes ~12% of ICONNET OLTs can rehome onto Telkom OLT/PoP with spare capacity."},
+      "olt_reuse_xgspon":      {"driver": "olts",                "driver_source": "twin",      "applicability_ratio": 0.08, "unit_value_idr_bn": 0.22,    "unit_desc": "avoided new-purchase value per reusable OLT/card set", "cost_to_achieve_ratio": 0.29, "confidence": "low", "rationale": "Only compatible XGS-PON gear; conservative reuse rate."},
+      "olt_totex_refresh":     {"driver": "olts",                "driver_source": "twin",      "applicability_ratio": 0.15, "unit_value_idr_bn": 0.30,    "unit_desc": "NPV of avoided lifecycle refresh per redundant OLT", "cost_to_achieve_ratio": 0.24, "confidence": "medium", "rationale": "Refresh must be in approved baseline to count."},
+      "agg_l2_retire":         {"driver": "agg_switches",        "driver_source": "synthetic", "applicability_ratio": 0.20, "unit_value_idr_bn": 0.90,    "unit_desc": "opex + avoided upgrade per retired aggregation switch", "cost_to_achieve_ratio": 0.32, "confidence": "low", "rationale": "Switch count not in twin; estimated as OLTs / 8 uplink-groups."},
+      "transport_cancel_links":{"driver": "transport_circuits",  "driver_source": "synthetic", "applicability_ratio": 0.18, "unit_value_idr_bn": 0.12,    "unit_desc": "annual recurring cost per cancellable circuit/wavelength", "cost_to_achieve_ratio": 0.21, "confidence": "low", "rationale": "Circuit inventory not in twin; estimated as OLTs x 1.5 circuits."},
+      "pe_retire":             {"driver": "pe_routers",          "driver_source": "synthetic", "applicability_ratio": 0.25, "unit_value_idr_bn": 2.10,    "unit_desc": "opex + avoided upgrade per retired PE router", "cost_to_achieve_ratio": 0.35, "confidence": "low", "rationale": "PE estate not in twin; estimated at 1 PE per SBU x 4 metro."},
+      "bng_retire":            {"driver": "broadband_subs",      "driver_source": "twin",      "applicability_ratio": 0.20, "unit_value_idr_bn": 0.0000200,"unit_desc": "license+opex saved per consolidated subscriber session (~IDR 20k/sub)", "cost_to_achieve_ratio": 0.40, "confidence": "low", "rationale": "Subs proxied by twin homes-served; only a share are license-avoidable."},
+      "msan_retire":           {"driver": "msan_sites",          "driver_source": "synthetic", "applicability_ratio": 0.30, "unit_value_idr_bn": 0.45,    "unit_desc": "opex + avoided refresh per retired MSAN site", "cost_to_achieve_ratio": 0.55, "confidence": "low", "rationale": "Legacy MSAN not in twin; estimated at 0.4 sites per OLT area."},
+      "noc_oss":               {"driver": "none",                "driver_source": "synthetic", "applicability_ratio": 1.00, "unit_value_idr_bn": 30.0,    "unit_desc": "fixed national tooling/facility + productivity pool", "cost_to_achieve_ratio": 0.40, "confidence": "low", "rationale": "Programme-level fixed estimate; no direct twin driver."},
+      "teams_field":           {"driver": "field_fte",           "driver_source": "synthetic", "applicability_ratio": 0.15, "unit_value_idr_bn": 0.35,    "unit_desc": "loaded cost saved per reducible field FTE/contractor", "cost_to_achieve_ratio": 0.38, "confidence": "low", "rationale": "FTE not in twin; estimated at 0.5 FTE per OLT."},
+      "process_performance":   {"driver": "fault_events",        "driver_source": "synthetic", "applicability_ratio": 0.20, "unit_value_idr_bn": 0.000015,"unit_desc": "cost/fault + SLA/churn value per avoided fault (~IDR 15k)", "cost_to_achieve_ratio": 0.40, "confidence": "low", "rationale": "Fault volume estimated at 3 faults/OLT/yr."},
+      "procurement":           {"driver": "addressable_spend",   "driver_source": "synthetic", "applicability_ratio": 0.08, "unit_value_idr_bn": 1.00,    "unit_desc": "achievable discount fraction applied to addressable spend (value = spend x ratio)", "cost_to_achieve_ratio": 0.09, "confidence": "medium", "rationale": "Addressable spend estimated from asset base; 8% blended discount."}
+    }
+  },
+
+  "table_3_synthetic_volumes": {
+    "SYNTHETIC": true,
+    "description": "Volume estimators for levers whose driver is NOT present in the twin. Each is expressed as a formula on twin-observable counts (OLTs, areas) so it scales with region, but the coefficients are synthetic.",
+    "estimators": {
+      "agg_switches":       {"formula": "olts / 8",        "note": "one aggregation switch per ~8 OLT uplink group"},
+      "transport_circuits": {"formula": "olts * 1.5",      "note": "~1.5 backhaul circuits/wavelengths per OLT site"},
+      "pe_routers":         {"formula": "sbu_count * 4",   "note": "~4 PE routers per SBU metro core"},
+      "msan_sites":         {"formula": "area_count * 0.4","note": "~0.4 legacy MSAN sites per footprint area"},
+      "field_fte":          {"formula": "olts * 0.5",      "note": "~0.5 field FTE/contractor per OLT"},
+      "fault_events":       {"formula": "olts * 3",        "note": "~3 reportable faults per OLT per year"},
+      "addressable_spend":  {"formula": "olts * 0.9",      "note": "~IDR 0.9 bn/yr addressable vendor+support spend per OLT (value already in IDR bn)"},
+      "route_km_national":  {"formula": "fat_count * 0.35","note": "~0.35 route-km per FAT serving area (national proxy where twin lacks cable geometry)"}
+    }
+  },
+
+  "table_4_illustrative_model": {
+    "SYNTHETIC": true,
+    "description": "The workbook's own placeholder Synergy_Model figures, kept for reference and used for the certainty component scores. gross/cost_to_achieve are illustrative IDR bn.",
+    "levers": {
+      "pon_duplicate_build":   {"gross_idr_bn": 120, "cost_to_achieve_idr_bn": 35, "status": "Base case", "scores": {"data_quality": 0.70, "field_validation": 0.55, "technical_feasibility": 0.60, "cost_avoidability": 0.65, "timing_readiness": 0.60}},
+      "pon_route_maintenance": {"gross_idr_bn": 40,  "cost_to_achieve_idr_bn": 15, "status": "Upside",    "scores": {"data_quality": 0.65, "field_validation": 0.50, "technical_feasibility": 0.55, "cost_avoidability": 0.55, "timing_readiness": 0.45}},
+      "olt_retire_redundant":  {"gross_idr_bn": 75,  "cost_to_achieve_idr_bn": 18, "status": "Validated", "scores": {"data_quality": 0.85, "field_validation": 0.80, "technical_feasibility": 0.80, "cost_avoidability": 0.75, "timing_readiness": 0.75}},
+      "olt_reuse_xgspon":      {"gross_idr_bn": 35,  "cost_to_achieve_idr_bn": 10, "status": "Upside",    "scores": {"data_quality": 0.55, "field_validation": 0.45, "technical_feasibility": 0.50, "cost_avoidability": 0.60, "timing_readiness": 0.55}},
+      "olt_totex_refresh":     {"gross_idr_bn": 90,  "cost_to_achieve_idr_bn": 22, "status": "Probable",  "scores": {"data_quality": 0.80, "field_validation": 0.70, "technical_feasibility": 0.75, "cost_avoidability": 0.75, "timing_readiness": 0.65}},
+      "agg_l2_retire":         {"gross_idr_bn": 110, "cost_to_achieve_idr_bn": 35, "status": "Probable",  "scores": {"data_quality": 0.80, "field_validation": 0.70, "technical_feasibility": 0.75, "cost_avoidability": 0.70, "timing_readiness": 0.65}},
+      "transport_cancel_links":{"gross_idr_bn": 95,  "cost_to_achieve_idr_bn": 20, "status": "Probable",  "scores": {"data_quality": 0.75, "field_validation": 0.65, "technical_feasibility": 0.70, "cost_avoidability": 0.60, "timing_readiness": 0.55}},
+      "pe_retire":             {"gross_idr_bn": 85,  "cost_to_achieve_idr_bn": 30, "status": "Base case", "scores": {"data_quality": 0.70, "field_validation": 0.65, "technical_feasibility": 0.65, "cost_avoidability": 0.65, "timing_readiness": 0.55}},
+      "bng_retire":            {"gross_idr_bn": 70,  "cost_to_achieve_idr_bn": 28, "status": "Upside",    "scores": {"data_quality": 0.60, "field_validation": 0.45, "technical_feasibility": 0.55, "cost_avoidability": 0.45, "timing_readiness": 0.45}},
+      "msan_retire":           {"gross_idr_bn": 55,  "cost_to_achieve_idr_bn": 30, "status": "Upside",    "scores": {"data_quality": 0.50, "field_validation": 0.45, "technical_feasibility": 0.45, "cost_avoidability": 0.50, "timing_readiness": 0.35}},
+      "noc_oss":               {"gross_idr_bn": 30,  "cost_to_achieve_idr_bn": 12, "status": "Base case", "scores": {"data_quality": 0.65, "field_validation": 0.50, "technical_feasibility": 0.65, "cost_avoidability": 0.55, "timing_readiness": 0.50}},
+      "teams_field":           {"gross_idr_bn": 65,  "cost_to_achieve_idr_bn": 25, "status": "Upside",    "scores": {"data_quality": 0.60, "field_validation": 0.45, "technical_feasibility": 0.55, "cost_avoidability": 0.50, "timing_readiness": 0.45}},
+      "process_performance":   {"gross_idr_bn": 45,  "cost_to_achieve_idr_bn": 18, "status": "Upside",    "scores": {"data_quality": 0.55, "field_validation": 0.45, "technical_feasibility": 0.60, "cost_avoidability": 0.40, "timing_readiness": 0.45}},
+      "procurement":           {"gross_idr_bn": 60,  "cost_to_achieve_idr_bn": 5,  "status": "Base case", "scores": {"data_quality": 0.75, "field_validation": 0.45, "technical_feasibility": 0.65, "cost_avoidability": 0.65, "timing_readiness": 0.60}}
+    }
+  }
+}

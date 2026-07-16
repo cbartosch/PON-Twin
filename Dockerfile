@@ -13,8 +13,9 @@ RUN pip install --no-cache-dir \
     -r requirements.txt
 
 # App code + data (JSON fixtures double as the Spanner seed source)
-COPY server.py twin_app.py spanner_store.py seed_spanner.py \
-     pon_data.json malang_sto.json entrypoint.sh ./
+COPY server.py twin_app.py spanner_store.py seed_spanner.py synergy.py \
+     pon_data.json malang_sto.json synergy_levers.json synergy_assumptions.json \
+     entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 EXPOSE 8520
