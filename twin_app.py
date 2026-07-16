@@ -1,5 +1,5 @@
 """
-Malang PON Digital Twin — Streamlit front-end for the MCP server.
+Indonesia PON Digital Twin — Streamlit front-end for the MCP server.
 Talks to the SAME MCP server (cmd /c run_twin.bat) over stdio, exactly as an
 AI agent would: list_tools() + call_tool(). No direct data access.
 """
@@ -121,7 +121,7 @@ def first_list(d):
     return None, None
 
 # ── Page config ──────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Malang PON Digital Twin", page_icon="🌐", layout="wide")
+st.set_page_config(page_title="Indonesia PON Digital Twin", page_icon="🌐", layout="wide")
 
 st.markdown("""
 <style>
@@ -131,7 +131,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌐 Malang PON Digital Twin")
+st.title("🌐 Indonesia PON Digital Twin")
 st.caption("Live front-end for the **pon-digital-twin** MCP server — every panel below is powered by real MCP tool calls.")
 
 # Connection check
@@ -706,7 +706,9 @@ with tab_chat:
                "then answers from the results.")
 
     SYS = (
-        "You are an analyst for the Malang 4-area PON fiber network digital twin. "
+        "You are an analyst for the Indonesia national PON fiber network digital twin "
+        "(PLN IconPlus / ICONNET), which spans the full national footprint plus detailed "
+        "deep-dive areas in Malang. "
         "Answer questions by calling the provided tools, which query a live inventory/topology "
         "model (OLTs, PON ports, splitters, ODPs, homes, poles, cables) and a consolidation "
         "business-case engine. Areas MAL-AR-01/02 are single-operator; MAL-AR-03/04 are overlap "
