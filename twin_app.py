@@ -62,6 +62,19 @@ def load_national_points():
     with open(NATIONAL_POINTS, encoding="utf-8") as f:
         return json.load(f)
 
+
+# National fibre-route skeleton (Distribution/feeder + Backbone/Core) with real
+# LINESTRING geometry from NET05. Same disk-only treatment as the ODP footprint.
+NATIONAL_CABLES = os.path.join(HERE, "national_cables.json")
+
+
+@st.cache_data(show_spinner="Loading national cable routes…")
+def load_national_cables():
+    if not os.path.exists(NATIONAL_CABLES):
+        return {"meta": {}, "cables": []}
+    with open(NATIONAL_CABLES, encoding="utf-8") as f:
+        return json.load(f)
+
 # ── MCP plumbing ─────────────────────────────────────────────────────────────
 async def _list_tools():
     async with stdio_client(SERVER) as (r, w):
@@ -469,6 +482,11 @@ with tab_map:
         "National IconPlus ODP/FAT footprint (all Indonesia)", True,
         help="355k secondary-splitter (FAT/ODP) access points across PLN IconPlus's "
              "full national serving area. Rendered directly from national_points.json.")
+    show_national_cables = st.checkbox(
+        "National fibre-route skeleton (Distribution/feeder + Backbone)", True,
+        help="152k national cable segments with real LINESTRING geometry from NET05 "
+             "(Access drop wires excluded to keep the map legible). "
+             "Rendered directly from national_cables.json.")
     show_olts = st.checkbox("OLTs (national ICONNET + Malang)", True)
     show_odps = st.checkbox("ODPs (Malang detailed)", False)
     show_homes = st.checkbox("Homes (sampled)", False)
@@ -508,8 +526,29 @@ with tab_map:
             st.caption(
                 f"National footprint: {len(nodps):,} IconPlus ODP/FAT access points "
                 f"({npts.get('meta', {}).get('operator', 'PLN IconPlus')}). "
-                "Note: national cable geometry is not in the source data — only Malang "
-                "has cable routes (toggle 'Fibre cable routes').")
+                f"({npts.get('meta', {}).get('operator', 'PLN IconPlus')}).")
+
+    if show_national_cables:
+        ncab = load_national_cables()
+        ncables = ncab.get("cables", [])
+        if ncables:
+            national_on = True
+            NAT_ROLE_COLOR = {"Distribution / Feeder": [37, 99, 235],
+                              "Backbone": [220, 38, 38], "Core": [147, 51, 234]}
+            ncdf = pd.DataFrame([{
+                "path": c["path"],
+                "color": NAT_ROLE_COLOR.get(c.get("role"), [148, 163, 184]),
+                "label": f'{c.get("role", "")} · {c.get("cable_type", "")} · {c.get("sbu", "")}',
+                "operator": "", "area_id": "",
+            } for c in ncables])
+            layers.append(pdk.Layer(
+                "PathLayer", data=ncdf, get_path="path", get_color="color",
+                get_width=2, width_min_pixels=0.5, width_max_pixels=3,
+                cap_rounded=True, joint_rounded=True, opacity=0.7, pickable=True))
+            st.caption(
+                f"National cable skeleton: {len(ncables):,} Distribution/feeder + Backbone "
+                "segments with real route geometry (NET05). Access drop wires excluded for "
+                "legibility; Malang still has full drop-level routes via 'Fibre cable routes'.")
 
     if show_olts:
         olts = tool_call("list_olts").get("olts", [])
