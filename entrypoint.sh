@@ -6,4 +6,5 @@ set -e
 python seed_spanner.py || echo "[entrypoint] seed step failed; continuing with JSON fallback"
 
 exec streamlit run twin_app.py \
-    --server.port=8520 --server.address=0.0.0.0 --server.headless=true
+    --server.port=8520 --server.address=0.0.0.0 --server.headless=true \
+    --server.maxMessageSize=400

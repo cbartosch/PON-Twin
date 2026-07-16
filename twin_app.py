@@ -517,7 +517,10 @@ with tab_map:
         nodps = npts.get("odps", [])
         if nodps:
             national_on = True
-            ndf_nat = pd.DataFrame(nodps)
+            # Ship ONLY coordinates to the browser (drop area/sbu strings) — the
+            # layer is not pickable, so per-point metadata would just bloat the
+            # websocket payload past Streamlit's message-size limit.
+            ndf_nat = pd.DataFrame(nodps, columns=["lat", "lng"])
             layers.append(pdk.Layer(
                 "ScatterplotLayer", data=ndf_nat,
                 get_position="[lng, lat]", get_radius=60,
@@ -535,16 +538,18 @@ with tab_map:
             national_on = True
             NAT_ROLE_COLOR = {"Distribution / Feeder": [37, 99, 235],
                               "Backbone": [220, 38, 38], "Core": [147, 51, 234]}
-            ncdf = pd.DataFrame([{
-                "path": c["path"],
-                "color": NAT_ROLE_COLOR.get(c.get("role"), [148, 163, 184]),
-                "label": f'{c.get("role", "")} · {c.get("cable_type", "")} · {c.get("sbu", "")}',
-                "operator": "", "area_id": "",
-            } for c in ncables])
-            layers.append(pdk.Layer(
-                "PathLayer", data=ncdf, get_path="path", get_color="color",
-                get_width=2, width_min_pixels=0.5, width_max_pixels=3,
-                cap_rounded=True, joint_rounded=True, opacity=0.7, pickable=True))
+            # One PathLayer per role with a CONSTANT colour so we ship only the
+            # geometry (the `path` column) to the browser — no per-row colour/
+            # label strings, which otherwise push 152k rows past the size limit.
+            by_role = {}
+            for c in ncables:
+                by_role.setdefault(c.get("role", ""), []).append({"path": c["path"]})
+            for role, rows in by_role.items():
+                layers.append(pdk.Layer(
+                    "PathLayer", data=pd.DataFrame(rows), get_path="path",
+                    get_color=NAT_ROLE_COLOR.get(role, [148, 163, 184]),
+                    get_width=2, width_min_pixels=0.5, width_max_pixels=3,
+                    cap_rounded=True, joint_rounded=True, opacity=0.7, pickable=False))
             st.caption(
                 f"National cable skeleton: {len(ncables):,} Distribution/feeder + Backbone "
                 "segments with real route geometry (NET05). Access drop wires excluded for "
