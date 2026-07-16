@@ -574,7 +574,8 @@ with tab_map:
             layers.append(pdk.Layer(
                 "ScatterplotLayer", data=oddf,
                 get_position="[longitude, latitude]", get_radius=30,
-                get_fill_color=[16,185,129], pickable=True))
+                # Same orange as the national ODP/FAT footprint (same asset type).
+                get_fill_color=[234, 88, 12], pickable=True))
 
     if show_homes:
         homes = tool_call("list_homes", {"max_results": 1000}).get("homes", [])
