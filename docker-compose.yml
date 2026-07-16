@@ -8,6 +8,11 @@ services:
       - "9011:9010"
       - "9020:9020"
     restart: unless-stopped
+    # RAM-backed emulator: it holds every seeded row in memory. The twin seeds
+    # ~59k lightweight rows (points/cables are kept OUT of Spanner and read from
+    # disk), so ~1.5 GB is ample headroom while capping runaway growth.
+    mem_limit: 1536m
+    mem_reservation: 512m
 
   digital-twin:
     build: .
@@ -30,3 +35,9 @@ services:
       - SPANNER_INSTANCE=twin-instance
       - SPANNER_DATABASE=twin
     restart: unless-stopped
+    # The Streamlit UI loads the national side-files (national_points.json ~30 MB,
+    # national_cables.json ~44 MB) and builds pandas/pydeck frames for 355k ODP
+    # points + 152k cable paths when the Map tab renders. 2 GB covers that spike
+    # with margin; the reservation keeps it schedulable under host pressure.
+    mem_limit: 2g
+    mem_reservation: 512m
