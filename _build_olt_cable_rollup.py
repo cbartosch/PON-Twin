@@ -267,6 +267,42 @@ def main():
                    "NOT seeded (kept in source); this is the analytics-grade cable model."),
     }
 
+    # --- surface the national B footprint on the dashboard (mirror Operator A) --
+    nfb = d["national_footprint"]["operator_B_cable_model"]
+    dash = d.get("dashboard", [])
+    relabel = {
+        "Operator B OLTs (actual)": ("Operator B OLTs in Malang",
+                                      "PLN IconPlus FTTH, granular twin (Malang kabupaten)"),
+        "Operator B ODPs (actual)": ("Operator B ODPs in Malang", "NET04 splitters (Malang)"),
+        "Operator B homes (actual)": ("Operator B homes in Malang", "NET07 ONT (Malang kabupaten)"),
+        "Operator B drop cable (actual)": ("Operator B drop cable in Malang", "NET05 aggregate (Malang)"),
+        "Operator B distribution cable (actual)": ("Operator B distribution cable in Malang",
+                                                   "NET05 aggregate (Malang)"),
+    }
+    have_national = any(r.get("Metric") == "Operator B OLTs (national)" for r in dash)
+    for r in dash:
+        m = r.get("Metric")
+        if m in relabel:
+            r["Metric"], r["Comment"] = relabel[m]
+        elif m == "Live PON ports":
+            r["Comment"] = "Operator A (national) + Operator B (Malang) live ports"
+        elif m == "Spare PON ports":
+            r["Comment"] = "Operator A (national) + Operator B (Malang) spare ports"
+    if not have_national:
+        nat_rows = [
+            {"Metric": "Operator B OLTs (national)", "Value": nfb["olts_total_b"], "Unit": "ea",
+             "Comment": f"PLN IconPlus national; {nfb['olts_with_plant']:,} with modeled plant within ~11km"},
+            {"Metric": "Operator B ODPs (national)", "Value": nfb["odp_count"], "Unit": "ea",
+             "Comment": "DRL serving-area FAT, nearest-OLT spatial join"},
+            {"Metric": "Operator B homes passed (national, est)", "Value": nfb["homes_passed_est"], "Unit": "home",
+             "Comment": "Estimated from FAT splitter_ratio"},
+            {"Metric": "Operator B route-km (national)", "Value": nfb["route_km_total"], "Unit": "km",
+             "Comment": (f"NET05 fibre: access {nfb['route_km_access']:,.0f} + distribution "
+                         f"{nfb['route_km_distribution']:,.0f} + bb/core {nfb['route_km_backbone_core']:,.0f}")},
+        ]
+        idx = next((i for i, r in enumerate(dash) if r.get("Metric") == "Area"), len(dash))
+        d["dashboard"] = dash[:idx] + nat_rows + dash[idx:]
+
     print(f"\nOLTs given a cable_model: {covered} / {len(b_olts)}")
     print(f"National route-km: total={nat['route_km_total']:,.0f} "
           f"(dist={nat['route_km_distribution']:,.0f} access={nat['route_km_access']:,.0f} "
