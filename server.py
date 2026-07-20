@@ -878,7 +878,7 @@ async def call_tool(name: str, arguments: dict):
             rows = [r for r in rows if r["area_id"].upper() == str(aid).upper()]
         return ok({
             "source_file": STO.get("source_file"),
-            "operator": "Operator A",
+            "operator": "Telkom",
             "olts_reconciled": len(rows),
             "tier1_core": _sto_core["sto_code"] if _sto_core else None,
             "reconciliation": rows,

@@ -47,7 +47,7 @@ if sys.platform == "win32":
 else:
     SERVER = StdioServerParameters(command=sys.executable, args=[SERVER_PY], env=_SPAWN_ENV)
 
-OP_COLORS = {"Operator A": [37, 99, 235], "Operator B": [234, 88, 12]}
+OP_COLORS = {"Telkom": [37, 99, 235], "Iconnect": [234, 88, 12]}
 
 # National IconPlus ODP/FAT footprint — a compact side-file (lat/lng only) read
 # directly from disk. NOT seeded to Spanner and NOT served over MCP (355k points
@@ -378,8 +378,8 @@ with tab_synergy:
 
 # ── Fiber Path Tracer ────────────────────────────────────────────────────────
 with tab_recon:
-    st.subheader("Operator A ↔ actual Malang STO backbone")
-    st.caption("Reconciles the synthetic Operator A twin against the real Telkom "
+    st.subheader("Telkom ↔ actual Malang STO backbone")
+    st.caption("Reconciles the synthetic Telkom twin against the real Telkom "
                "Malang OLT/STO/Tier-3 data and shows the Tier-2 aggregation hierarchy "
                "now included in the twin.")
 
@@ -388,7 +388,7 @@ with tab_recon:
         st.error(rec["error"])
     else:
         st.markdown(f"**Core (Tier 1):** `{rec.get('tier1_core')}` · "
-                    f"**Operator A OLTs reconciled:** {rec.get('olts_reconciled')}")
+                    f"**Telkom OLTs reconciled:** {rec.get('olts_reconciled')}")
         rows = rec.get("reconciliation", [])
         if rows:
             df = pd.DataFrame([{
@@ -496,7 +496,7 @@ with tab_map:
     # only Malang has this Telkom STO hierarchy, so leaving them on made Malang
     # look differently coloured from the rest of Indonesia.
     show_sto = st.checkbox("STO backbone — Malang only (Tier 1/2/3 + aggregation links)", False)
-    show_recon = st.checkbox("Operator A reconciliation links — Malang only (OLT → Tier-3)", False)
+    show_recon = st.checkbox("Telkom reconciliation links — Malang only (OLT → Tier-3)", False)
     show_fiber = st.checkbox("Fibre cable routes (by cable type)", False)
 
     # Cable-role colours for the fibre route layer.
