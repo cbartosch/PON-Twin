@@ -270,24 +270,25 @@ def main():
     # --- surface the national B footprint on the dashboard (mirror Operator A) --
     nfb = d["national_footprint"]["operator_B_cable_model"]
     dash = d.get("dashboard", [])
-    relabel = {
-        "Operator B OLTs (actual)": ("Operator B OLTs in Malang",
-                                      "PLN IconPlus FTTH, granular twin (Malang kabupaten)"),
-        "Operator B ODPs (actual)": ("Operator B ODPs in Malang", "NET04 splitters (Malang)"),
-        "Operator B homes (actual)": ("Operator B homes in Malang", "NET07 ONT (Malang kabupaten)"),
-        "Operator B drop cable (actual)": ("Operator B drop cable in Malang", "NET05 aggregate (Malang)"),
-        "Operator B distribution cable (actual)": ("Operator B distribution cable in Malang",
-                                                   "NET05 aggregate (Malang)"),
+    # Drop the operator-level Malang subset rows so the dashboard shows national
+    # operator figures only (both the pre-ETL "(actual)" names and any already
+    # relabelled "in Malang" names, for idempotency).
+    drop = {
+        "Operator B OLTs (actual)", "Operator B ODPs (actual)", "Operator B homes (actual)",
+        "Operator B drop cable (actual)", "Operator B distribution cable (actual)",
+        "Operator B OLTs in Malang", "Operator B ODPs in Malang", "Operator B homes in Malang",
+        "Operator B drop cable in Malang", "Operator B distribution cable in Malang",
+        "Operator B poles in Malang bbox", "Operator A OLTs in Malang",
     }
+    dash = [r for r in dash if r.get("Metric") not in drop]
     have_national = any(r.get("Metric") == "Operator B OLTs (national)" for r in dash)
     for r in dash:
         m = r.get("Metric")
-        if m in relabel:
-            r["Metric"], r["Comment"] = relabel[m]
-        elif m == "Live PON ports":
+        if m == "Live PON ports":
             r["Comment"] = "Operator A (national) + Operator B (Malang) live ports"
         elif m == "Spare PON ports":
             r["Comment"] = "Operator A (national) + Operator B (Malang) spare ports"
+    d["dashboard"] = dash
     if not have_national:
         nat_rows = [
             {"Metric": "Operator B OLTs (national)", "Value": nfb["olts_total_b"], "Unit": "ea",
