@@ -216,26 +216,48 @@ def _active_value(inv, c):
     return inv["olts"] * c["olt_cost"] + inv["live_ports"] * c["port_cost"]
 
 def _consolidate_area(area_id, c):
-    area = _area_idx.get(area_id)
+    area = _area_idx.get(area_id) or {}
     invs = {op: _operator_inventory(area_id, op) for op in ("A", "B")}
-    present = [op for op in ("A", "B") if invs[op]["homes"] > 0 or invs[op]["live_ports"] > 0]
+    # Operator A (Telkom) is carried in the twin as OLT + PON-port capacity only
+    # (no granular passive-plant rows), so derive its presence and capacity from
+    # the area's Operator A port rollup rather than from pon_ports/homes.
+    a_live = area.get("operator_A_live_ports", 0) or 0
+    b_live = area.get("operator_B_live_ports", invs["B"]["live_ports"]) or 0
+    a_present = a_live > 0 or invs["A"]["olts"] > 0 or invs["A"]["live_ports"] > 0
+    b_present = (invs["B"]["homes"] > 0 or invs["B"]["live_ports"] > 0
+                 or b_live > 0 or _passive_value(invs["B"], c) > 0)
+    present = [op for op, p in (("A", a_present), ("B", b_present)) if p]
     if len(present) < 2:
         return {
             "area_id": area_id,
-            "area_name": area.get("area_name") if area else None,
-            "archetype": area.get("archetype") if area else None,
+            "area_name": area.get("area_name"),
+            "archetype": area.get("archetype"),
             "operators_present": present,
             "consolidation_applicable": False,
             "note": "Single-operator area — no duplicate passive plant to consolidate.",
         }
-    # Choose surviving operator = larger passive plant; retire the other.
-    pv = {op: _passive_value(invs[op], c) for op in present}
-    surviving = max(present, key=lambda op: pv[op])
-    retiring = [op for op in present if op != surviving][0]
+
+    # Surviving operator is chosen by installed PON-port CAPACITY dominance (the
+    # operator with the majority of live ports survives), NOT by passive-plant
+    # value — Telkom's passive plant is not granularly modeled in the twin.
+    cap = a_live + b_live
+    sa = area.get("operator_A_capacity_share")
+    if sa is None:
+        sa = round(a_live / cap, 4) if cap else 0.0
+    sb = area.get("operator_B_capacity_share")
+    if sb is None:
+        sb = round(b_live / cap, 4) if cap else 0.0
+    surviving = "A" if sa >= sb else "B"
+    retiring = "B" if surviving == "A" else "A"
+
     ri = invs[retiring]
-    retired_passive_value = pv[retiring]
+    retired_passive_value = _passive_value(ri, c)
     cable_km_removed = (ri["feeder_m"] + ri["distribution_m"] + ri["drop_m"]) / 1000.0
     homes_migrated = ri["homes"]
+    # Economics are only meaningful when the RETIRING operator's granular passive
+    # plant is actually present in the twin (true for Operator B; Operator A is
+    # capacity-only, so B-dominant areas can be flagged but not costed).
+    retiring_plant_modeled = retired_passive_value > 0 or homes_migrated > 0
 
     migration_direct = (homes_migrated * c["resplice_per_home"]
                         + ri["poles"] * c["decomm_per_pole"]
@@ -246,21 +268,25 @@ def _consolidate_area(area_id, c):
     duration_months = math.ceil(
         c["planning_months"]
         + max(ri["poles"] / c["poles_per_month"], homes_migrated / c["homes_per_month"])
-    )
+    ) if retiring_plant_modeled else 0
     r = c["discount_rate"]
     npv_5yr = -migration_capex + sum(annual_opex_savings / ((1 + r) ** t) for t in range(1, 6))
 
     as_is_capex = sum(_passive_value(invs[op], c) + _active_value(invs[op], c) for op in present)
     to_be_capex = as_is_capex - retired_passive_value
 
-    return {
+    res = {
         "area_id": area_id,
-        "area_name": area.get("area_name") if area else None,
-        "archetype": area.get("archetype") if area else None,
+        "area_name": area.get("area_name"),
+        "archetype": area.get("archetype"),
         "operators_present": present,
         "consolidation_applicable": True,
+        "dominance_basis": area.get("dominance_basis", "port_capacity (live PON ports)"),
+        "operator_A_capacity_share": sa,
+        "operator_B_capacity_share": sb,
         "surviving_operator": surviving,
         "retiring_operator": retiring,
+        "retiring_plant_modeled": retiring_plant_modeled,
         "inventory_by_operator": invs,
         "as_is_asset_value_usd": round(as_is_capex),
         "to_be_asset_value_usd": round(to_be_capex),
@@ -275,6 +301,12 @@ def _consolidate_area(area_id, c):
         "poles_removed": ri["poles"],
         "cable_km_removed": round(cable_km_removed, 2),
     }
+    if not retiring_plant_modeled:
+        res["note"] = (
+            f"Survivor is Operator {surviving} by port capacity, so Operator {retiring} "
+            f"would retire — but Operator {retiring}'s granular passive plant is not carried "
+            f"in the twin (capacity-only), so consolidation economics are not modeled here.")
+    return res
 
 # ── Server ───────────────────────────────────────────────────────────────────
 server = Server("pon-digital-twin")
@@ -435,11 +467,15 @@ async def list_tools():
             name="project_consolidation",
             description=(
                 "Business case for consolidating the TWO operators in an overlap area onto a single "
-                "shared passive network. Retires the smaller operator's duplicate plant and migrates its "
-                "homes onto the surviving network. Returns per-operator inventory, avoided duplicate asset "
-                "value, one-time migration CAPEX, annual OPEX savings, 5-year net cash, NPV, payback in "
-                "months, and project duration in months. Omit area_id to aggregate across all overlap areas. "
-                "Exclusive (single-operator) areas return consolidation_applicable=false. All unit costs are "
+                "shared passive network. The surviving operator is chosen by PON-port CAPACITY dominance "
+                "(the operator with the majority of live PON ports survives); the other operator's duplicate "
+                "plant is retired and its homes migrated onto the surviving network. Returns per-operator "
+                "inventory, capacity shares, avoided duplicate asset value, one-time migration CAPEX, annual "
+                "OPEX savings, 5-year net cash, NPV, payback in months, and project duration in months. Omit "
+                "area_id to aggregate across all overlap areas. Exclusive (single-operator) areas return "
+                "consolidation_applicable=false. Areas where the retiring operator's granular passive plant "
+                "is not carried in the twin (e.g. Telkom is capacity-only) are flagged "
+                "retiring_plant_modeled=false and excluded from the costed roll-up. All unit costs are "
                 "documented modeling assumptions in USD and can be overridden."
             ),
             inputSchema={"type":"object","properties":{
@@ -792,26 +828,32 @@ async def call_tool(name: str, arguments: dict):
         aid = arguments.get("area_id")
         if aid:
             return ok({"assumptions_usd": c, **_consolidate_area(aid, c)})
-        # Network-wide: aggregate across all applicable (overlap) areas
+        # Network-wide: aggregate across overlap areas. Survivor is set per area by
+        # port-capacity dominance; economics roll up only the areas where the
+        # retiring operator's passive plant is actually modeled in the twin.
         cases = [_consolidate_area(a["area_id"], c) for a in D["areas"]]
         applic = [x for x in cases if x.get("consolidation_applicable")]
+        modeled = [x for x in applic if x.get("retiring_plant_modeled")]
+        pending = [x for x in applic if not x.get("retiring_plant_modeled")]
         agg = {
             "scope": "network-wide (all overlap areas)",
-            "areas_consolidated": [x["area_id"] for x in applic],
+            "survivor_selection": "port-capacity dominance (operator with majority live PON ports survives)",
+            "areas_consolidated": [x["area_id"] for x in modeled],
+            "areas_survivor_plant_not_modeled": [x["area_id"] for x in pending],
             "areas_not_applicable": [x["area_id"] for x in cases if not x.get("consolidation_applicable")],
-            "avoided_duplicate_passive_value_usd": round(sum(x["avoided_duplicate_passive_value_usd"] for x in applic)),
-            "one_time_migration_capex_usd": round(sum(x["one_time_migration_capex_usd"] for x in applic)),
-            "annual_opex_savings_usd": round(sum(x["annual_opex_savings_usd"] for x in applic)),
-            "five_year_net_cash_usd": round(sum(x["five_year_net_cash_usd"] for x in applic)),
-            "npv_5yr_usd": round(sum(x["npv_5yr_usd"] for x in applic)),
-            "homes_migrated": sum(x["homes_migrated"] for x in applic),
-            "poles_removed": sum(x["poles_removed"] for x in applic),
-            "cable_km_removed": round(sum(x["cable_km_removed"] for x in applic), 2),
-            "programme_duration_months": max([x["project_duration_months"] for x in applic], default=0),
+            "avoided_duplicate_passive_value_usd": round(sum(x["avoided_duplicate_passive_value_usd"] for x in modeled)),
+            "one_time_migration_capex_usd": round(sum(x["one_time_migration_capex_usd"] for x in modeled)),
+            "annual_opex_savings_usd": round(sum(x["annual_opex_savings_usd"] for x in modeled)),
+            "five_year_net_cash_usd": round(sum(x["five_year_net_cash_usd"] for x in modeled)),
+            "npv_5yr_usd": round(sum(x["npv_5yr_usd"] for x in modeled)),
+            "homes_migrated": sum(x["homes_migrated"] for x in modeled),
+            "poles_removed": sum(x["poles_removed"] for x in modeled),
+            "cable_km_removed": round(sum(x["cable_km_removed"] for x in modeled), 2),
+            "programme_duration_months": max([x["project_duration_months"] for x in modeled], default=0),
         }
         tot_opex = agg["annual_opex_savings_usd"]
         agg["blended_payback_months"] = round(agg["one_time_migration_capex_usd"] / (tot_opex / 12), 1) if tot_opex else None
-        return ok({"assumptions_usd": c, **agg, "by_area": applic})
+        return ok({"assumptions_usd": c, **agg, "by_area": modeled})
 
     elif name == "list_sto_nodes":
         if not STO:

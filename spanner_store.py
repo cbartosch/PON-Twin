@@ -139,21 +139,28 @@ def load_twin():
 
     collections = {}
     sto = None
+    # NB: no server-side ORDER BY. Sorting ~68k rows in one query exceeds the
+    # emulator's max_intermediate_byte_size (128 MB) sort buffer and fails the
+    # whole read. We stream unordered and restore (collection, ordinal) order
+    # client-side, which the emulator can serve row-by-row without buffering.
     with db.snapshot() as snap:
         results = snap.execute_sql(
-            "SELECT collection, ordinal, payload FROM twin_records "
-            "ORDER BY collection, ordinal"
+            "SELECT collection, ordinal, payload FROM twin_records"
         )
-        for collection, _ordinal, payload in results:
+        rows = []
+        for collection, ordinal, payload in results:
             # payload arrives as a JsonObject (dict subclass) or str depending on version.
             if isinstance(payload, str):
                 payload = json.loads(payload)
             else:
                 payload = json.loads(json.dumps(payload))  # normalise to plain dict/list
-            if collection == "_sto_root":
-                sto = payload
-            else:
-                collections.setdefault(collection, []).append(payload)
+            rows.append((collection, ordinal, payload))
+    rows.sort(key=lambda r: (r[0], r[1]))
+    for collection, _ordinal, payload in rows:
+        if collection == "_sto_root":
+            sto = payload
+        else:
+            collections.setdefault(collection, []).append(payload)
     return collections, sto
 
 
