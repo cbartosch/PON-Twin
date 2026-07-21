@@ -91,7 +91,7 @@ def main():
     data = {
         "meta": {
             "source": "01 NET.zip / NET05 - Fibre Cable and segments (DRL_NET-05 Segment Cable_v3)",
-            "operator": "PLN IconPlus (Operator B)",
+            "operator": "PLN IconPlus (Iconnect)",
             "note": "National cable-route skeleton (Distribution/feeder + Backbone/Core only; "
                     "~908k Access drop wires excluded). Coords rounded to 5 dp. Not seeded to Spanner.",
             "segments_scanned": n,

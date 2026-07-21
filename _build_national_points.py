@@ -44,7 +44,7 @@ def main():
     data = {
         "meta": {
             "source": "DRL_ServingArea_Polygon.gdb.zip (DRL_FAT_Cov250)",
-            "operator": "PLN IconPlus (Operator B)",
+            "operator": "PLN IconPlus (Iconnect)",
             "note": "Compact national ODP/FAT mapping points. Not seeded to Spanner. "
                     "Coords rounded to 5 dp. Polygon geometry omitted.",
             "odp_count": len(odps),
