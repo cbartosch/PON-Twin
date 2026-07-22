@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "source_file": "olt_cost_sheet_indonesia.xlsx",
+    "title": "OLT & Fiber Works Cost Sheet - Indonesia",
+    "currency": "IDR",
+    "pricing_date": "2026-07-21",
+    "location_basis": "Indonesia - Jakarta/Java urban (Jabodetabek)",
+    "certainty": "benchmark",
+    "basis_note": "2026 budgetary benchmark using Indonesian field-service rates + SEA equipment pricing calibrated to a real OLT-consolidation business case. All totals include a 10% contingency and 11% effective VAT. Replace with approved OEM/distributor and contractor quotations before purchase order.",
+    "excludes": "New feeder cable construction, trenching/duct/civil works, long-haul inter-site transport, major power/HVAC upgrades, lease exit, customer truck rolls, and remote-island freight (set remote_area_multiplier > 1 for outer islands).",
+    "contingency_rate": 0.10,
+    "vat_rate": 0.11,
+    "usd_idr": 17909,
+    "remote_area_multiplier": 1.0,
+    "one_time_project_total_idr": 1383893610,
+    "annual_om_total_idr": 268620000
+  },
+  "assumptions": {
+    "fiber_technician_day_idr": 1250000,
+    "olt_engineer_day_idr": 2500000,
+    "olt_chassis_for_om": 1,
+    "existing_pon_ports": 16,
+    "target_pon_ports_extension": 32,
+    "existing_chassis_max_ports": 32,
+    "target_chassis_max_ports": 128,
+    "dki_jakarta_2026_ump_idr_month": 5729876
+  },
+  "one_time_workstreams": [
+    {"id": "cap_ext_16_32", "workstream": "Capacity extension 16 to 32 ports", "unit": "per OLT", "direct_idr": 138400000, "contingency_idr": 13840000, "tax_idr": 16746400, "total_incl_tax_idr": 168986400, "note": "16-port line card + optics + patching + commissioning."},
+    {"id": "chassis_upgrade_32_128", "workstream": "Chassis upgrade 32 to 128 max ports", "unit": "per OLT", "direct_idr": 748000000, "contingency_idr": 74800000, "tax_idr": 90508000, "total_incl_tax_idr": 913308000, "note": "128-port-ready chassis, redundant controllers/uplinks/power, migration + cutover."},
+    {"id": "olt_relocate", "workstream": "Relocation of OLT chassis", "unit": "per OLT", "direct_idr": 155000000, "contingency_idr": 15500000, "tax_idr": 18755000, "total_incl_tax_idr": 189255000, "note": "Survey, rack/power readiness, patch reroute, physical move, validation."},
+    {"id": "olt_decommission", "workstream": "Decommissioning of OLT chassis", "unit": "per OLT", "direct_idr": 48000000, "contingency_idr": 4800000, "tax_idr": 5808000, "total_incl_tax_idr": 58608000, "note": "Service audit, disconnect/recover, fiber/power/rack cleanup, disposal/logistics."},
+    {"id": "resplice_24", "workstream": "Fiber re-splicing 24 strands", "unit": "per 24-strand joint", "direct_idr": 9860000, "contingency_idr": 986000, "tax_idr": 1193060, "total_incl_tax_idr": 12039060, "note": "24-core fusion splice + OTDR test + records."},
+    {"id": "resplice_48", "workstream": "Fiber re-splicing 48 strands", "unit": "per 48-strand joint", "direct_idr": 13400000, "contingency_idr": 1340000, "tax_idr": 1621400, "total_incl_tax_idr": 16361400, "note": "48-core fusion splice + OTDR test + records."},
+    {"id": "odp_reconnect", "workstream": "Reconnect ODP to different strand", "unit": "per ODP", "direct_idr": 6000000, "contingency_idr": 600000, "tax_idr": 726000, "total_incl_tax_idr": 7326000, "note": "Trace/reserve strand, ODP jumper/re-splice/re-terminate, records + service test."},
+    {"id": "splitter_move", "workstream": "Move splitter location", "unit": "per splitter", "direct_idr": 14750000, "contingency_idr": 1475000, "tax_idr": 1784750, "total_incl_tax_idr": 18009750, "note": "Redesign, housing/materials, move + re-splice, power-level validation."}
+  ],
+  "om_components": [
+    {"id": "oem_maintenance", "component": "OEM / vendor annual maintenance", "unit": "per OLT-year", "annual_direct_idr": 100000000, "annual_total_incl_tax_idr": 122100000},
+    {"id": "noc_l1", "component": "NOC monitoring and L1 support", "unit": "per OLT-year", "annual_direct_idr": 24000000, "annual_total_incl_tax_idr": 29304000},
+    {"id": "l2_field", "component": "L2 field support retainer", "unit": "per OLT-year", "annual_direct_idr": 18000000, "annual_total_incl_tax_idr": 21978000},
+    {"id": "preventive_maint", "component": "Preventive maintenance visits", "unit": "per OLT-year", "annual_direct_idr": 12000000, "annual_total_incl_tax_idr": 14652000},
+    {"id": "emergency_callout", "component": "Emergency call-out allowance", "unit": "per OLT-year", "annual_direct_idr": 14000000, "annual_total_incl_tax_idr": 17094000},
+    {"id": "spares_holding", "component": "Critical spare module holding", "unit": "per OLT-year", "annual_direct_idr": 30000000, "annual_total_incl_tax_idr": 36630000},
+    {"id": "firmware_windows", "component": "Firmware/software upgrade windows", "unit": "per OLT-year", "annual_direct_idr": 14000000, "annual_total_incl_tax_idr": 17094000},
+    {"id": "sla_reporting", "component": "SLA reporting and asset inventory", "unit": "per OLT-year", "annual_direct_idr": 8000000, "annual_total_incl_tax_idr": 9768000}
+  ],
+  "derived": {
+    "annual_om_per_olt_full_idr": 268620000,
+    "annual_om_per_olt_oem_only_idr": 122100000,
+    "olt_decommission_per_olt_idr": 58608000,
+    "olt_relocate_per_olt_idr": 189255000,
+    "odp_reconnect_per_odp_idr": 7326000,
+    "splitter_move_per_splitter_idr": 18009750
+  }
+}

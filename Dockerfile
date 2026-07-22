@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir \
 # App code + data (JSON fixtures double as the Spanner seed source)
 COPY server.py twin_app.py spanner_store.py seed_spanner.py synergy.py \
      pon_data.json malang_sto.json national_points.json national_cables.json \
-     synergy_levers.json synergy_assumptions.json \
+     synergy_levers.json synergy_assumptions.json costs.json \
      entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 

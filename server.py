@@ -171,6 +171,73 @@ DEFAULT_COSTS = {
     "planning_months": 2.0,       # fixed design/permit lead time
 }
 
+# ── Real IDR cost sheet (olt_cost_sheet_indonesia.xlsx) ───────────────────────
+# Loaded from disk (like the national side-files); NOT seeded to Spanner. Holds
+# benchmark Indonesian costs for OLT/fibre operations (decommission, relocate,
+# capacity/chassis upgrade, ODP reconnect, splitter move) + a fully-allocated
+# annual O&M model. Every total already includes 10% contingency + 11% VAT.
+COSTS_PATH = Path(__file__).parent / "costs.json"
+
+def _load_costs():
+    try:
+        with open(COSTS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
+COSTS = _load_costs()
+_COST_DER = (COSTS or {}).get("derived", {})
+_COST_FX = float(((COSTS or {}).get("meta", {})).get("usd_idr") or 0) or None
+
+def _idr_consolidation(ri, c, r):
+    """Real-cost (IDR) consolidation economics for a retiring operator inventory
+    `ri`, using the benchmark cost sheet. Costs the redundant OLTs (decommission +
+    forgone annual O&M) and the ODPs that must be re-pointed onto the survivor.
+    Returns None if the cost sheet is unavailable."""
+    if not COSTS:
+        return None
+    rmult = float(c.get("remote_multiplier", COSTS["meta"].get("remote_area_multiplier", 1.0)))
+    om_mode = c.get("om_mode", "full")
+    om_per_olt = (_COST_DER["annual_om_per_olt_oem_only_idr"] if om_mode == "oem_only"
+                  else _COST_DER["annual_om_per_olt_full_idr"])
+    retired_olts = ri["olts"]
+    retired_odps = ri["odps"]
+    decommission_idr = retired_olts * _COST_DER["olt_decommission_per_olt_idr"]
+    odp_rework_idr = retired_odps * _COST_DER["odp_reconnect_per_odp_idr"]
+    one_time_idr = (decommission_idr + odp_rework_idr) * rmult
+    annual_om_savings_idr = retired_olts * om_per_olt
+    payback_months = (one_time_idr / (annual_om_savings_idr / 12)) if annual_om_savings_idr else None
+    npv_5yr_idr = -one_time_idr + sum(annual_om_savings_idr / ((1 + r) ** t) for t in range(1, 6))
+    fx = _COST_FX
+    def usd(x):
+        return round(x / fx) if fx else None
+    return {
+        "cost_source": f"{COSTS['meta']['source_file']} (Indonesia base case, {COSTS['meta']['pricing_date']})",
+        "certainty": COSTS["meta"]["certainty"],
+        "currency": "IDR",
+        "includes": "10% contingency + 11% VAT",
+        "om_mode": om_mode,
+        "remote_area_multiplier": rmult,
+        "retired_olts_decommissioned": retired_olts,
+        "retired_odps_reconnected": retired_odps,
+        "one_time_capex_idr": round(one_time_idr),
+        "one_time_capex_breakdown_idr": {
+            "olt_decommission": round(decommission_idr * rmult),
+            "odp_reconnect": round(odp_rework_idr * rmult),
+        },
+        "annual_om_savings_idr": round(annual_om_savings_idr),
+        "five_year_net_cash_idr": round(5 * annual_om_savings_idr - one_time_idr),
+        "npv_5yr_idr": round(npv_5yr_idr),
+        "payback_months": round(payback_months, 1) if payback_months else None,
+        "usd_equivalent": {
+            "fx_usd_idr": fx,
+            "one_time_capex_usd": usd(one_time_idr),
+            "annual_om_savings_usd": usd(annual_om_savings_idr),
+            "npv_5yr_usd": usd(npv_5yr_idr),
+        },
+        "excludes": "Survivor-side capacity uplift (port extension/chassis upgrade), new feeder civil works, transport, permits.",
+    }
+
 def _cable_m_for(area_id, op_code):
     """Return (feeder_m, distribution_m, drop_m) for an operator in an area."""
     feeder = dist = 0.0
@@ -301,7 +368,11 @@ def _consolidate_area(area_id, c):
         "poles_removed": ri["poles"],
         "cable_km_removed": round(cable_km_removed, 2),
     }
-    if not retiring_plant_modeled:
+    if retiring_plant_modeled:
+        idr = _idr_consolidation(ri, c, r)
+        if idr:
+            res["idr_cost_model"] = idr
+    else:
         res["note"] = (
             f"Survivor is Operator {surviving} by port capacity, so Operator {retiring} "
             f"would retire — but Operator {retiring}'s granular passive plant is not carried "
@@ -475,15 +546,22 @@ async def list_tools():
                 "area_id to aggregate across all overlap areas. Exclusive (single-operator) areas return "
                 "consolidation_applicable=false. Areas where the retiring operator's granular passive plant "
                 "is not carried in the twin (e.g. Telkom is capacity-only) are flagged "
-                "retiring_plant_modeled=false and excluded from the costed roll-up. All unit costs are "
-                "documented modeling assumptions in USD and can be overridden."
+                "retiring_plant_modeled=false and excluded from the costed roll-up. The USD figures use "
+                "documented greenfield asset assumptions. In ADDITION, an 'idr_cost_model' block is returned "
+                "wherever plant is modeled, costed from the REAL benchmark Indonesian cost sheet "
+                "(olt_cost_sheet_indonesia.xlsx): each retired OLT is decommissioned + its fully-allocated "
+                "annual O&M saved, and each retired ODP re-pointed onto the survivor (all IDR totals include "
+                "10%% contingency + 11%% VAT, with USD equivalents at the sheet FX). See get_costs for the "
+                "unit-cost catalogue and sources."
             ),
             inputSchema={"type":"object","properties":{
                 "area_id":{"type":"string","description":"e.g. MAL-AR-03. Omit for network-wide aggregate."},
                 "pole_cost":{"type":"number","description":"Override USD per pole (default 150)."},
                 "opex_pct":{"type":"number","description":"Override annual maintenance %% of passive value (default 0.08)."},
                 "resplice_per_home":{"type":"number","description":"Override USD to migrate one home (default 45)."},
-                "discount_rate":{"type":"number","description":"Override annual discount rate for NPV (default 0.10)."}
+                "discount_rate":{"type":"number","description":"Override annual discount rate for NPV (default 0.10)."},
+                "remote_multiplier":{"type":"number","description":"IDR cost sheet: outer-island freight/mobilisation multiplier on one-time costs (default 1.0)."},
+                "om_mode":{"type":"string","description":"IDR O&M basis: 'full' fully-allocated (default) or 'oem_only' (vendor maintenance only)."}
             }},
         ),
         types.Tool(
@@ -521,6 +599,20 @@ async def list_tools():
             description=(
                 "Report which datastore is backing the twin ('spanner' when reading from the "
                 "Cloud Spanner emulator, 'json' when using local fixtures) plus record counts."
+            ),
+            inputSchema={"type":"object","properties":{}},
+        ),
+        types.Tool(
+            name="get_costs",
+            description=(
+                "Return the REAL benchmark cost catalogue (olt_cost_sheet_indonesia.xlsx): Indonesian "
+                "IDR unit costs for OLT/fibre operations — capacity extension, chassis upgrade, OLT "
+                "relocation, OLT decommissioning, 24/48-strand re-splicing, ODP reconnect, splitter move — "
+                "plus a fully-allocated annual O&M model (OEM support, NOC/L1, L2 field, preventive "
+                "maintenance, call-outs, spares, firmware, SLA reporting). Includes meta (pricing date, "
+                "location basis, 10% contingency, 11% VAT, USD/IDR FX, exclusions) and source references. "
+                "These are the costs that ground project_consolidation's idr_cost_model. Benchmark figures — "
+                "replace with approved OEM/distributor/contractor quotations before purchase order."
             ),
             inputSchema={"type":"object","properties":{}},
         ),
@@ -822,12 +914,15 @@ async def call_tool(name: str, arguments: dict):
 
     elif name == "project_consolidation":
         c = dict(DEFAULT_COSTS)
-        for k in ("pole_cost", "opex_pct", "resplice_per_home", "discount_rate"):
+        for k in ("pole_cost", "opex_pct", "resplice_per_home", "discount_rate", "remote_multiplier"):
             if arguments.get(k) is not None:
                 c[k] = float(arguments[k])
+        if arguments.get("om_mode") is not None:
+            c["om_mode"] = arguments["om_mode"]
         aid = arguments.get("area_id")
         if aid:
-            return ok({"assumptions_usd": c, **_consolidate_area(aid, c)})
+            return ok({"assumptions_usd": c, "idr_cost_source": (COSTS or {}).get("meta"),
+                       **_consolidate_area(aid, c)})
         # Network-wide: aggregate across overlap areas. Survivor is set per area by
         # port-capacity dominance; economics roll up only the areas where the
         # retiring operator's passive plant is actually modeled in the twin.
@@ -853,7 +948,34 @@ async def call_tool(name: str, arguments: dict):
         }
         tot_opex = agg["annual_opex_savings_usd"]
         agg["blended_payback_months"] = round(agg["one_time_migration_capex_usd"] / (tot_opex / 12), 1) if tot_opex else None
-        return ok({"assumptions_usd": c, **agg, "by_area": modeled})
+        # Real-cost (IDR) roll-up from the benchmark cost sheet, where present.
+        idr_cases = [x["idr_cost_model"] for x in modeled if x.get("idr_cost_model")]
+        if idr_cases:
+            fx = _COST_FX
+            one_time = sum(x["one_time_capex_idr"] for x in idr_cases)
+            annual = sum(x["annual_om_savings_idr"] for x in idr_cases)
+            npv = sum(x["npv_5yr_idr"] for x in idr_cases)
+            agg["idr_cost_model"] = {
+                "cost_source": idr_cases[0]["cost_source"],
+                "certainty": idr_cases[0]["certainty"],
+                "currency": "IDR",
+                "areas_costed": len(idr_cases),
+                "retired_olts_decommissioned": sum(x["retired_olts_decommissioned"] for x in idr_cases),
+                "retired_odps_reconnected": sum(x["retired_odps_reconnected"] for x in idr_cases),
+                "one_time_capex_idr": round(one_time),
+                "annual_om_savings_idr": round(annual),
+                "five_year_net_cash_idr": round(5 * annual - one_time),
+                "npv_5yr_idr": round(npv),
+                "blended_payback_months": round(one_time / (annual / 12), 1) if annual else None,
+                "usd_equivalent": {
+                    "fx_usd_idr": fx,
+                    "one_time_capex_usd": round(one_time / fx) if fx else None,
+                    "annual_om_savings_usd": round(annual / fx) if fx else None,
+                    "npv_5yr_usd": round(npv / fx) if fx else None,
+                },
+            }
+        return ok({"assumptions_usd": c, "idr_cost_source": (COSTS or {}).get("meta"),
+                   **agg, "by_area": modeled})
 
     elif name == "list_sto_nodes":
         if not STO:
@@ -896,6 +1018,11 @@ async def call_tool(name: str, arguments: dict):
             "collection_counts": {k: (len(v) if isinstance(v, list) else 1) for k, v in D.items()},
             "sto_loaded": STO is not None,
         })
+
+    elif name == "get_costs":
+        if not COSTS:
+            return ok({"error": "costs.json not found; add the OLT cost sheet to enable real-cost economics."})
+        return ok(COSTS)
 
     elif name == "list_synergy_levers":
         return ok(synergy.catalogue())

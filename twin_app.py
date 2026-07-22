@@ -247,9 +247,17 @@ with tab_consol:
     with colB:
         resplice = st.number_input("Re-splice per home (USD)", value=45.0, step=5.0)
         disc = st.number_input("Discount rate", value=0.10, step=0.01, format="%.2f")
+    colC, colD = st.columns(2)
+    with colC:
+        om_mode = st.selectbox("IDR O&M basis (real cost sheet)", ["full", "oem_only"],
+                               help="'full' = fully-allocated annual O&M per OLT; 'oem_only' = vendor maintenance only.")
+    with colD:
+        remote_mult = st.number_input("Remote-area multiplier", value=1.0, step=0.1, format="%.1f",
+                                      help="Outer-island freight/mobilisation uplift on one-time IDR costs.")
     if st.button("Project consolidation", type="primary"):
         args = {"pole_cost": pole_cost, "opex_pct": opex_pct,
-                "resplice_per_home": resplice, "discount_rate": disc}
+                "resplice_per_home": resplice, "discount_rate": disc,
+                "om_mode": om_mode, "remote_multiplier": remote_mult}
         if csel != "(network-wide)":
             args["area_id"] = csel
         r = tool_call("project_consolidation", args)
@@ -279,6 +287,27 @@ with tab_consol:
             m2[1].metric("Duration", f"{dur} mo")
             m2[2].metric("Homes migrated", f"{homes:,}")
             m2[3].metric("Poles removed", f"{r['poles_removed']:,}")
+            idr = r.get("idr_cost_model")
+            if idr:
+                st.markdown("---")
+                st.markdown("**Real-cost business case (IDR)** — benchmark Indonesian cost sheet "
+                            "(incl. 10% contingency + 11% VAT)")
+                ipay = idr.get("payback_months") or idr.get("blended_payback_months")
+                usd = idr.get("usd_equivalent", {})
+                im = st.columns(4)
+                im[0].metric("One-time CAPEX", f"Rp{idr['one_time_capex_idr']:,.0f}",
+                             help=f"≈ ${usd.get('one_time_capex_usd'):,} at {usd.get('fx_usd_idr')}" if usd.get('one_time_capex_usd') else None)
+                im[1].metric("Annual O&M savings", f"Rp{idr['annual_om_savings_idr']:,.0f}",
+                             help=f"≈ ${usd.get('annual_om_savings_usd'):,}" if usd.get('annual_om_savings_usd') else None)
+                im[2].metric("5-yr NPV", f"Rp{idr['npv_5yr_idr']:,.0f}",
+                             help=f"≈ ${usd.get('npv_5yr_usd'):,}" if usd.get('npv_5yr_usd') else None)
+                im[3].metric("Payback", f"{ipay} mo" if ipay else "—")
+                im2 = st.columns(4)
+                im2[0].metric("OLTs decommissioned", f"{idr['retired_olts_decommissioned']:,}")
+                im2[1].metric("ODPs reconnected", f"{idr['retired_odps_reconnected']:,}")
+                im2[2].metric("O&M basis", idr.get("om_mode", om_mode))
+                st.caption(f"Source: {idr['cost_source']} · certainty: {idr['certainty']}. "
+                           "Excludes survivor-side capacity uplift, civil works, transport, permits.")
             if r.get("inventory_by_operator"):
                 st.markdown("**Inventory by operator**")
                 st.dataframe(pd.DataFrame(r["inventory_by_operator"]).T,
