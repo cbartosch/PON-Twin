@@ -1,5 +1,5 @@
 """
-Malang PON Digital Twin — MCP Server
+Indonesia National PON Digital Twin (Telkom + Iconnect) — MCP Server
 Exposes tools for an AI agent to query the full topology and inventory.
 """
 import json, os, math
@@ -387,18 +387,18 @@ async def list_tools():
     return [
         types.Tool(
             name="get_dashboard",
-            description="Return all top-level KPIs and summary statistics for the Malang PON network (areas, OLTs, ports, homes, cable totals).",
+            description="Return all top-level KPIs and summary statistics for the national PON consolidation twin (Telkom + Iconnect: areas, OLTs, ports, homes, cable totals).",
             inputSchema={"type":"object","properties":{}},
         ),
         types.Tool(
             name="list_areas",
-            description="List all four PON areas with archetype, operator shares, connected-home counts, and dominant operator.",
+            description="List all PON areas (19 Malang deep-detail STO areas + national-footprint rollups) with archetype, operator shares, connected-home counts, and dominant operator.",
             inputSchema={"type":"object","properties":{}},
         ),
         types.Tool(
             name="get_area",
             description="Return full detail for a single area.",
-            inputSchema={"type":"object","properties":{"area_id":{"type":"string","description":"e.g. MAL-AR-01"}},"required":["area_id"]},
+            inputSchema={"type":"object","properties":{"area_id":{"type":"string","description":"e.g. AMP (Malang STO) or ICON-BALI (national footprint)"}},"required":["area_id"]},
         ),
         types.Tool(
             name="list_olts",

@@ -464,7 +464,7 @@ with tab_recon:
 
 with tab_trace:
     st.subheader("Trace fiber path OLT → Home")
-    default_home = "HH-A-MAL-AR-01-P01-S01-H05"
+    default_home = "HH-B-14100090XXXX"
     home_id = st.text_input("Home ID", value=default_home)
     if st.button("Trace", type="primary"):
         p = tool_call("trace_fiber_path", {"home_id": home_id})
@@ -746,13 +746,15 @@ with tab_chat:
                "then answers from the results.")
 
     SYS = (
-        "You are an analyst for the Indonesia national PON fiber network digital twin "
-        "(PLN IconPlus / ICONNET), which spans the full national footprint plus detailed "
-        "deep-dive areas in Malang. "
+        "You are an analyst for the Indonesia national PON fiber network digital twin, a "
+        "two-operator consolidation case: Operator A = Telkom (operator_code 'A') and "
+        "Operator B = Iconnect / PLN IconPlus (operator_code 'B'). It spans the full national "
+        "footprint plus 19 detailed deep-dive STO areas in Malang (e.g. AMP, BNR, SGS). "
         "Answer questions by calling the provided tools, which query a live inventory/topology "
         "model (OLTs, PON ports, splitters, ODPs, homes, poles, cables) and a consolidation "
-        "business-case engine. Areas MAL-AR-01/02 are single-operator; MAL-AR-03/04 are overlap "
-        "areas where operators can be consolidated. Prefer calling tools over guessing. Give "
+        "business-case engine. The Malang STO areas are where the retiring operator's granular "
+        "plant is modeled, so consolidation business cases (incl. the real IDR cost model) apply "
+        "there. Prefer calling tools over guessing. Give "
         "concise, quantitative answers with units (USD, m/km, months). When you cite money or "
         "distances, name the tool you used."
     )
@@ -777,7 +779,7 @@ with tab_chat:
         with st.chat_message(msg["role"]):
             st.markdown(msg["display"])
 
-    prompt = st.chat_input("e.g. What's the payback for consolidating MAL-AR-03?")
+    prompt = st.chat_input("e.g. What's the payback for consolidating SGS?")
     if prompt:
         with st.chat_message("user"):
             st.markdown(prompt)
