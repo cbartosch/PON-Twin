@@ -356,12 +356,14 @@ with tab_synergy:
         ldf = pd.DataFrame(levs)
         ldf["volume basis"] = ldf["twin_grounded_volume"].map(
             lambda b: "twin" if b else "SYNTHETIC")
-        show = ["bucket", "lever", "driver", "driver_volume", "volume basis",
+        ldf["cost basis"] = ldf.get("cost_basis", "synthetic")
+        show = ["bucket", "lever", "driver", "driver_volume", "volume basis", "cost basis",
                 "gross", "net", "certainty", "bankable", "risk"]
         st.dataframe(ldf[[c for c in show if c in ldf.columns]],
                      use_container_width=True, hide_index=True)
-        st.caption("via `synergy_summary` — 'volume basis' = SYNTHETIC when the driver "
-                   "volume is not held in the twin.")
+        st.caption("via `synergy_summary` — 'volume basis' = SYNTHETIC when the driver volume "
+                   "is not held in the twin; 'cost basis' = real_benchmark/mixed when unit "
+                   "economics come from the real cost sheet (costs.json), else synthetic.")
 
     st.divider()
     st.markdown("#### Drill into one lever")
@@ -385,8 +387,11 @@ with tab_synergy:
             ev = r.get("twin_evidence", {}); est = r.get("estimate_idr_bn", {})
             st.markdown(f"**{r.get('bucket')} — {r.get('lever')}**  ·  region *{r.get('region_label')}*")
             b = "✅ twin-grounded" if ev.get("twin_grounded_volume") else "⚠️ SYNTHETIC volume"
+            cb = r.get("cost_basis", "synthetic")
+            cb_badge = {"real_benchmark": "✅ real cost sheet", "mixed": "◐ mixed (CTA real)",
+                        "synthetic": "⚠️ synthetic"}.get(cb, cb)
             st.markdown(f"Driver **{ev.get('driver')}** = **{ev.get('driver_volume'):,}** "
-                        f"({b}, source `{ev.get('driver_source')}`)")
+                        f"({b}, source `{ev.get('driver_source')}`) · cost basis: **{cb_badge}**")
             e = st.columns(3)
             e[0].metric("Gross (IDR bn)", f"{est.get('gross_synergy',0):,.1f}")
             e[1].metric("Net", f"{est.get('net_synergy',0):,.1f}")

@@ -3,14 +3,21 @@ Network synergy analysis for the PON digital twin.
 
 Answers "how much synergy for lever X in region Y" by combining:
   * REAL twin volumes (homes passed, OLT counts, FDT/FAT counts, route-km) pulled
-    live from the loaded twin data D, and
+    live from the loaded twin data D,
+  * REAL benchmark unit economics from the Indonesian OLT & fiber-works cost sheet
+    (costs.json) for the levers that sheet genuinely covers, and
   * SYNTHETIC estimate tables (synergy_assumptions.json) for the unit economics,
     duplication ratios, certainty scores and any driver the twin does not hold
     (aggregation switches, PE routers, BNG sessions, MSAN, field FTE, ...).
 
-Every monetary answer consumes at least the synthetic unit-economics table, so
-each result carries 'derived_from_synthetic': true and lists exactly which
-synthetic tables were used, plus whether the underlying VOLUME was twin-grounded.
+Cost grounding: because costs.json is specifically an OLT + fiber-works benchmark,
+it can ground only the OLT-side levers -- 'olt_retire_redundant' (real annual O&M
+avoided per retired OLT as the value driver + real per-OLT decommission as the
+cost-to-achieve) and 'olt_reuse_xgspon' (real per-OLT relocation as the
+cost-to-achieve). The aggregation / transport / PE / BNG / MSAN / NOC / procurement
+levers have no analogue in this sheet and remain synthetic. Each result reports a
+per-input source map (real_cost_sheet / synthetic / override) and a 'cost_basis'
+of real_benchmark / mixed / synthetic so real and estimated money never blur.
 """
 import json
 from pathlib import Path
@@ -18,17 +25,53 @@ from pathlib import Path
 _HERE = Path(__file__).parent
 _LEVERS = None
 _ASSUME = None
+_COSTS = None
+_IDR_BN = 1e9  # costs.json is in whole IDR; synergy model works in IDR billions
 
 
 def _load():
-    global _LEVERS, _ASSUME
+    global _LEVERS, _ASSUME, _COSTS
     if _LEVERS is None:
         with open(_HERE / "synergy_levers.json", encoding="utf-8") as f:
             _LEVERS = json.load(f)
     if _ASSUME is None:
         with open(_HERE / "synergy_assumptions.json", encoding="utf-8") as f:
             _ASSUME = json.load(f)
+    if _COSTS is None:
+        p = _HERE / "costs.json"
+        _COSTS = json.load(open(p, encoding="utf-8")) if p.exists() else {}
     return _LEVERS, _ASSUME
+
+
+def _cost_grounded(lever_id):
+    """Real per-unit economics (IDR bn) from the benchmark cost sheet (costs.json)
+    for the levers it genuinely covers. Returns None when the lever has no real-cost
+    analogue in an OLT/fiber-works sheet, so it stays synthetic.
+
+    - unit_value_idr_bn ...... real value driver per unit (only where the sheet holds it)
+    - cta_idr_bn_per_unit .... real one-time cost-to-achieve per unit
+    """
+    der = (_COSTS or {}).get("derived", {})
+    if not der:
+        return None
+    if lever_id == "olt_retire_redundant":
+        return {
+            "unit_value_idr_bn": der["annual_om_per_olt_full_idr"] / _IDR_BN,
+            "unit_value_desc": "annual O&M run-rate avoided per retired OLT (full O&M basis, real cost sheet)",
+            "value_kind": "annual_run_rate",
+            "cta_idr_bn_per_unit": der["olt_decommission_per_olt_idr"] / _IDR_BN,
+            "grounded": "full",  # both value driver and cost-to-achieve are real
+            "source_items": ["annual_om_per_olt_full_idr", "olt_decommission_per_olt_idr"],
+        }
+    if lever_id == "olt_reuse_xgspon":
+        return {
+            # avoided new-purchase value is NOT in a works cost sheet -> keep synthetic unit_value
+            "cta_idr_bn_per_unit": der["olt_relocate_per_olt_idr"] / _IDR_BN,
+            "value_kind": "one_time",
+            "grounded": "cost_to_achieve_only",
+            "source_items": ["olt_relocate_per_olt_idr"],
+        }
+    return None
 
 
 def _num(x):
@@ -152,21 +195,73 @@ def analyze_lever(D, lever_id, region=None, overrides=None):
     volume = dinfo["value"]
     volume_source = dinfo["source"]
 
-    applicability = float(overrides.get("applicability_ratio", ue["applicability_ratio"]))
-    unit_value = float(overrides.get("unit_value_idr_bn", ue["unit_value_idr_bn"]))
-    cta_ratio = float(overrides.get("cost_to_achieve_ratio", ue["cost_to_achieve_ratio"]))
+    ground = _cost_grounded(lever_id)
 
-    gross = volume * applicability * unit_value
-    cta = gross * cta_ratio
+    # Applicability is always a planning estimate (share of the driver actually addressable).
+    applicability = float(overrides.get("applicability_ratio", ue["applicability_ratio"]))
+    appl_source = "override" if "applicability_ratio" in overrides else "synthetic"
+    effective_units = volume * applicability
+
+    # --- value driver (unit_value) : real cost sheet > override > synthetic table ---
+    if "unit_value_idr_bn" in overrides:
+        unit_value, unit_value_source, unit_desc = float(overrides["unit_value_idr_bn"]), "override", ue["unit_desc"]
+        value_kind = ue.get("value_kind", "lump")
+    elif ground and "unit_value_idr_bn" in ground:
+        unit_value, unit_value_source, unit_desc = ground["unit_value_idr_bn"], "real_cost_sheet", ground["unit_value_desc"]
+        value_kind = ground["value_kind"]
+    else:
+        unit_value, unit_value_source, unit_desc = float(ue["unit_value_idr_bn"]), "synthetic", ue["unit_desc"]
+        value_kind = ue.get("value_kind", "lump")
+
+    gross = effective_units * unit_value
+
+    # --- cost-to-achieve : override ratio > real per-unit > synthetic ratio ---
+    if "cost_to_achieve_ratio" in overrides:
+        cta_ratio = float(overrides["cost_to_achieve_ratio"])
+        cta, cta_source = gross * cta_ratio, "override"
+        cta_basis = {"ratio_of_gross": cta_ratio}
+    elif ground and "cta_idr_bn_per_unit" in ground:
+        cta_per_unit = ground["cta_idr_bn_per_unit"]
+        cta, cta_source = effective_units * cta_per_unit, "real_cost_sheet"
+        cta_basis = {"per_unit_idr_bn": round(cta_per_unit, 6), "addressable_units": round(effective_units, 2)}
+    else:
+        cta_ratio = float(ue["cost_to_achieve_ratio"])
+        cta, cta_source = gross * cta_ratio, "synthetic"
+        cta_basis = {"ratio_of_gross": cta_ratio}
+
     net = gross - cta
     certainty = _certainty(illus["scores"], weights)
     bankable = net * certainty
     risk = net - bankable
 
     twin_grounded = volume_source in ("twin", "twin_proxy", "twin_partial")
-    synthetic_tables = ["table_1_certainty_weights", "table_2_unit_economics", "table_4_illustrative_model"]
+
+    # cost_basis: are the unit economics (value + CTA) real, mixed, or synthetic?
+    real_flags = [unit_value_source == "real_cost_sheet", cta_source == "real_cost_sheet"]
+    if all(real_flags):
+        cost_basis = "real_benchmark"
+    elif any(real_flags):
+        cost_basis = "mixed"
+    else:
+        cost_basis = "synthetic"
+    # applicability is always an estimate, so any answer still carries a synthetic input
+    any_synthetic = (unit_value_source == "synthetic" or cta_source == "synthetic"
+                     or appl_source == "synthetic" or not twin_grounded)
+
+    synthetic_tables = ["table_1_certainty_weights", "table_4_illustrative_model"]
+    if unit_value_source == "synthetic" or cta_source == "synthetic":
+        synthetic_tables.insert(1, "table_2_unit_economics")
     if not twin_grounded or volume_source == "synthetic":
         synthetic_tables.append("table_3_synthetic_volumes")
+
+    cost_note = {
+        "real_benchmark": "Unit economics grounded in the real Indonesian OLT/fiber-works cost sheet (costs.json)",
+        "mixed": "Cost-to-achieve grounded in the real cost sheet; value driver is a SYNTHETIC estimate",
+        "synthetic": "Unit economics are SYNTHETIC estimates (no analogue in the OLT/fiber-works cost sheet)",
+    }[cost_basis]
+    flag = (cost_note
+            + ("; applicability ratio is a planning estimate" if appl_source == "synthetic" else "")
+            + ("" if twin_grounded else "; volume driver is ALSO synthetic (no twin data)"))
 
     return {
         "lever_id": lever_id,
@@ -175,20 +270,30 @@ def analyze_lever(D, lever_id, region=None, overrides=None):
         "region": dr["region"],
         "region_label": dr["region_label"],
         "calculation_logic": lev["calculation_logic"],
+        "cost_basis": cost_basis,
         "twin_evidence": {
             "driver": driver_name,
             "driver_volume": volume,
             "driver_source": volume_source,
             "twin_grounded_volume": twin_grounded,
+            "addressable_units": round(effective_units, 2),
         },
-        "synthetic_inputs": {
+        "inputs": {
             "applicability_ratio": applicability,
-            "unit_value_idr_bn": unit_value,
-            "unit_desc": ue["unit_desc"],
-            "cost_to_achieve_ratio": cta_ratio,
+            "unit_value_idr_bn": round(unit_value, 6),
+            "unit_desc": unit_desc,
+            "value_kind": value_kind,
+            "cost_to_achieve_basis": cta_basis,
             "confidence": ue["confidence"],
             "rationale": ue["rationale"],
         },
+        "input_sources": {
+            "applicability_ratio": appl_source,
+            "unit_value": unit_value_source,
+            "cost_to_achieve": cta_source,
+            "volume": volume_source,
+        },
+        "cost_sheet_items_used": ground["source_items"] if ground else [],
         "estimate_idr_bn": {
             "gross_synergy": round(gross, 2),
             "cost_to_achieve": round(cta, 2),
@@ -202,10 +307,9 @@ def analyze_lever(D, lever_id, region=None, overrides=None):
             "cost_to_achieve": illus["cost_to_achieve_idr_bn"],
             "status": illus["status"],
         },
-        "derived_from_synthetic": True,
+        "derived_from_synthetic": any_synthetic,
         "synthetic_tables_used": synthetic_tables,
-        "flag": ("ESTIMATE - monetary figures use SYNTHETIC unit economics"
-                 + ("" if twin_grounded else "; volume driver is ALSO synthetic (no twin data)")),
+        "flag": flag,
     }
 
 
@@ -219,6 +323,10 @@ def summary(D, region=None):
             tot[k] += r["estimate_idr_bn"][k]
     dr = twin_drivers(D, region)
     any_synth_vol = any(not r["twin_evidence"]["twin_grounded_volume"] for r in rows)
+    cost_basis_counts = {}
+    for r in rows:
+        cost_basis_counts[r["cost_basis"]] = cost_basis_counts.get(r["cost_basis"], 0) + 1
+    grounded_ids = [r["lever_id"] for r in rows if r["cost_basis"] in ("real_benchmark", "mixed")]
     return {
         "region": dr["region"],
         "region_label": dr["region_label"],
@@ -230,12 +338,20 @@ def summary(D, region=None):
             "fat_serving_areas": dr["drivers"]["fat_count"]["value"],
         },
         "portfolio_totals_idr_bn": {k: round(v, 1) for k, v in tot.items()},
+        "cost_grounding": {
+            "cost_basis_counts": cost_basis_counts,
+            "cost_grounded_levers": grounded_ids,
+            "cost_source": (_COSTS or {}).get("meta", {}).get("title", "n/a"),
+            "note": ("Real cost sheet is an OLT & fiber-works benchmark, so it grounds only the "
+                     "OLT-side levers; other levers keep synthetic unit economics."),
+        },
         "levers": [
             {
                 "lever_id": r["lever_id"], "bucket": r["bucket"], "lever": r["lever"],
                 "driver": r["twin_evidence"]["driver"],
                 "driver_volume": r["twin_evidence"]["driver_volume"],
                 "twin_grounded_volume": r["twin_evidence"]["twin_grounded_volume"],
+                "cost_basis": r["cost_basis"],
                 "gross": r["estimate_idr_bn"]["gross_synergy"],
                 "net": r["estimate_idr_bn"]["net_synergy"],
                 "certainty": r["estimate_idr_bn"]["certainty_score"],
@@ -244,9 +360,10 @@ def summary(D, region=None):
             } for r in rows
         ],
         "derived_from_synthetic": True,
-        "flag": ("All monetary figures are ESTIMATES using SYNTHETIC unit-economics tables"
+        "flag": (f"{len(grounded_ids)} of {len(rows)} levers grounded in the real cost sheet "
+                 f"({', '.join(grounded_ids) or 'none'}); the rest use SYNTHETIC unit economics"
                  + ("; some lever volumes are also synthetic (no twin data)" if any_synth_vol else "")
-                 + ". Replace with audited data before decisions."),
+                 + ". Applicability ratios remain planning estimates. Replace with audited data before decisions."),
     }
 
 

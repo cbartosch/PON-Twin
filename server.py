@@ -640,10 +640,14 @@ async def list_tools():
             name="analyze_synergy_lever",
             description=(
                 "Estimate one synergy lever for a region by combining REAL twin volumes (homes passed, "
-                "OLT/FDT/FAT counts, route-km) with SYNTHETIC unit-economics tables. Returns twin evidence, "
-                "the synthetic inputs used, an IDR-bn estimate (gross/cost-to-achieve/net/certainty/bankable/"
-                "risk), the workbook illustrative figure, and flags. Every result is flagged "
-                "derived_from_synthetic; volumes are separately flagged twin-grounded or synthetic."
+                "OLT/FDT/FAT counts, route-km) with unit economics that are REAL benchmark values from the "
+                "Indonesian OLT/fiber-works cost sheet (costs.json) where that sheet covers the lever, and "
+                "SYNTHETIC estimates otherwise. OLT-side levers are cost-grounded: olt_retire_redundant "
+                "(real annual O&M avoided + real per-OLT decommission), olt_reuse_xgspon (real per-OLT "
+                "relocation cost-to-achieve). Returns a 'cost_basis' (real_benchmark/mixed/synthetic), a "
+                "per-input source map, twin evidence, an IDR-bn estimate (gross/cost-to-achieve/net/certainty/"
+                "bankable/risk), the workbook illustrative figure, and flags. Applicability ratios remain "
+                "planning estimates; volumes are separately flagged twin-grounded or synthetic."
             ),
             inputSchema={"type":"object","properties":{
                 "lever_id":{"type":"string","description":"e.g. olt_retire_redundant, pon_duplicate_build (see list_synergy_levers)"},
@@ -656,10 +660,11 @@ async def list_tools():
         types.Tool(
             name="synergy_summary",
             description=(
-                "Portfolio roll-up of all 14 synergy levers for a region: a twin volume snapshot plus total "
+                "Portfolio roll-up of all 14 synergy levers for a region: a twin volume snapshot, a "
+                "cost_grounding block (which levers use real cost-sheet unit economics vs synthetic), total "
                 "gross/net/bankable/risk (IDR bn) and a per-lever table showing driver, driver volume, whether "
-                "the volume is twin-grounded, and the estimated values. All monetary figures are flagged "
-                "SYNTHETIC estimates."
+                "the volume is twin-grounded, the cost_basis, and the estimated values. OLT-side levers are "
+                "grounded in the real cost sheet; other levers' unit economics are SYNTHETIC estimates."
             ),
             inputSchema={"type":"object","properties":{
                 "region":{"type":"string","description":"Omit/all=whole footprint; 'national'; 'malang'; an SBU code; or an area_id."}
