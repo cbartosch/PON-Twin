@@ -27,6 +27,11 @@ _LEVERS = None
 _ASSUME = None
 _COSTS = None
 _IDR_BN = 1e9  # costs.json is in whole IDR; synergy model works in IDR billions
+# Discounting mirrors project_consolidation.idr_cost_model so the OLT-retire lever is
+# expressed on the same 5-yr-NPV basis as the consolidation business case.
+_DISCOUNT_RATE = 0.10
+_HORIZON_YEARS = 5
+_NPV_FACTOR = sum(1.0 / (1 + _DISCOUNT_RATE) ** t for t in range(1, _HORIZON_YEARS + 1))
 
 
 def _load():
@@ -55,13 +60,19 @@ def _cost_grounded(lever_id):
     if not der:
         return None
     if lever_id == "olt_retire_redundant":
+        # Value the retired OLT on the SAME 5-yr-NPV basis as the consolidation business
+        # case: NPV(annual O&M avoided) as the (lump) value driver, one-time decommission
+        # as the cost-to-achieve. This keeps gross/CTA both as stocks (no flow-vs-stock mix)
+        # and makes the lever comparable to the other (lump) levers in the portfolio total.
         return {
-            "unit_value_idr_bn": der["annual_om_per_olt_full_idr"] / _IDR_BN,
-            "unit_value_desc": "annual O&M run-rate avoided per retired OLT (full O&M basis, real cost sheet)",
-            "value_kind": "annual_run_rate",
+            "unit_value_idr_bn": (der["annual_om_per_olt_full_idr"] / _IDR_BN) * _NPV_FACTOR,
+            "unit_value_desc": (f"{_HORIZON_YEARS}-yr NPV @ {int(_DISCOUNT_RATE*100)}% of annual O&M "
+                                "avoided per retired OLT (full O&M basis, real cost sheet)"),
+            "value_kind": f"npv_{_HORIZON_YEARS}yr",
             "cta_idr_bn_per_unit": der["olt_decommission_per_olt_idr"] / _IDR_BN,
             "grounded": "full",  # both value driver and cost-to-achieve are real
             "source_items": ["annual_om_per_olt_full_idr", "olt_decommission_per_olt_idr"],
+            "overlaps_tool": "project_consolidation",
         }
     if lever_id == "olt_reuse_xgspon":
         return {
@@ -70,6 +81,7 @@ def _cost_grounded(lever_id):
             "value_kind": "one_time",
             "grounded": "cost_to_achieve_only",
             "source_items": ["olt_relocate_per_olt_idr"],
+            "overlaps_tool": "project_consolidation",
         }
     return None
 
@@ -259,9 +271,11 @@ def analyze_lever(D, lever_id, region=None, overrides=None):
         "mixed": "Cost-to-achieve grounded in the real cost sheet; value driver is a SYNTHETIC estimate",
         "synthetic": "Unit economics are SYNTHETIC estimates (no analogue in the OLT/fiber-works cost sheet)",
     }[cost_basis]
+    overlaps = ground.get("overlaps_tool") if ground else None
     flag = (cost_note
             + ("; applicability ratio is a planning estimate" if appl_source == "synthetic" else "")
-            + ("" if twin_grounded else "; volume driver is ALSO synthetic (no twin data)"))
+            + ("" if twin_grounded else "; volume driver is ALSO synthetic (no twin data)")
+            + (f"; OVERLAPS {overlaps} (same retired-OLT economics) -- do not sum the two" if overlaps else ""))
 
     return {
         "lever_id": lever_id,
@@ -294,6 +308,7 @@ def analyze_lever(D, lever_id, region=None, overrides=None):
             "volume": volume_source,
         },
         "cost_sheet_items_used": ground["source_items"] if ground else [],
+        "overlaps_tool": overlaps,
         "estimate_idr_bn": {
             "gross_synergy": round(gross, 2),
             "cost_to_achieve": round(cta, 2),
@@ -343,7 +358,9 @@ def summary(D, region=None):
             "cost_grounded_levers": grounded_ids,
             "cost_source": (_COSTS or {}).get("meta", {}).get("title", "n/a"),
             "note": ("Real cost sheet is an OLT & fiber-works benchmark, so it grounds only the "
-                     "OLT-side levers; other levers keep synthetic unit economics."),
+                     "OLT-side levers; other levers keep synthetic unit economics. The cost-grounded "
+                     "OLT levers reuse project_consolidation's retired-OLT economics -- do NOT add "
+                     "these lever values to a project_consolidation NPV for the same OLTs."),
         },
         "levers": [
             {
